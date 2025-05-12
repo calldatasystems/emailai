@@ -1,0 +1,64 @@
+name: email-ai-services
+services:
+  db:
+    image: postgres
+    restart: always
+    container_name: email-ai
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-emailai}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
+    volumes:
+      - database-data:/var/lib/postgresql/data/
+    ports:
+      - ${POSTGRES_PORT:-5432}:5432
+    networks:
+      - email-ai-network
+
+  redis:
+    image: redis
+    ports:
+      - ${REDIS_PORT:-6380}:6379
+    volumes:
+      - database-data:/data
+    networks:
+      - email-ai-network
+
+  serverless-redis-http:
+    ports:
+      - "${REDIS_HTTP_PORT:-8079}:80"
+    image: hiett/serverless-redis-http:latest
+    env_file:
+      - ./apps/web/.env
+    environment:
+      SRH_MODE: env
+      SRH_TOKEN: ${UPSTASH_REDIS_TOKEN}
+      SRH_CONNECTION_STRING: "redis://redis:6379" # Using `redis` hostname since they're in the same Docker network.
+    networks:
+      - email-ai-network
+
+  web:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.web
+    # image: ghcr.io/elie222/email-ai:latest
+    env_file:
+      - ./apps/web/.env
+    depends_on:
+      - db
+      - redis
+    ports:
+      - ${WEB_PORT:-3000}:3000
+    networks:
+      - email-ai-network
+    environment:
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-emailai}?schema=public"
+      DIRECT_URL: "postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-password}@db:5432/${POSTGRES_DB:-emailai}?schema=public"
+      UPSTASH_REDIS_URL: "http://serverless-redis-http:80"
+      UPSTASH_REDIS_TOKEN: "${UPSTASH_REDIS_TOKEN}"
+
+volumes:
+  database-data:
+
+networks:
+  email-ai-network:
