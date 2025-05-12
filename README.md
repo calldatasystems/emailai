@@ -17,7 +17,7 @@
 
 ## About
 
-There are two parts to Inbox Zero:
+There are two parts to Email AI:
 
 1. An AI email assistant that helps you spend less time on email.
 2. Open source AI email client.
@@ -26,7 +26,7 @@ If you're looking to contribute to the project, the email client is the best pla
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Felie222%2Femail-ai&env=NEXTAUTH_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,GOOGLE_ENCRYPT_SECRET,GOOGLE_ENCRYPT_SALT,UPSTASH_REDIS_URL,UPSTASH_REDIS_TOKEN,GOOGLE_PUBSUB_TOPIC_NAME,DATABASE_URL)
 
-Thanks to Vercel for sponsoring Inbox Zero in support of open-source software.
+Thanks to Vercel for sponsoring Email AI in support of open-source software.
 
 ## Features
 
@@ -49,7 +49,7 @@ Learn more in our [docs](https://docs.calldata.app).
 
 ## Demo Video
 
-[![Inbox Zero demo](/video-thumbnail.png)](http://www.youtube.com/watch?v=hfvKvTHBjG0)
+[![Email AI demo](/video-thumbnail.png)](http://www.youtube.com/watch?v=hfvKvTHBjG0)
 
 ## Built with
 
@@ -70,7 +70,7 @@ To request a feature open a [GitHub issue](https://github.com/elie222/email-ai/i
 
 ## Getting Started for Developers
 
-We offer a hosted version of Inbox Zero at [https://calldata.app](https://calldata.app). To self-host follow the steps below.
+We offer a hosted version of Email AI at [https://calldata.app](https://calldata.app). To self-host follow the steps below.
 
 ### Setup
 
