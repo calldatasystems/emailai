@@ -1,294 +1,350 @@
-[![](apps/web/app/opengraph-image.png)](https://www.emailai.com)
-
 <p align="center">
   <a href="https://www.emailai.com">
     <h1 align="center">EmailAI - Your AI Email Assistant</h1>
   </a>
   <p align="center">
-    Open source AI email assistant to automate and manage your inbox.
-    <br />
-    <a href="https://www.emailai.com">Website</a>
-    ·
-    <a href="https://www.emailai.com/discord">Discord</a>
-    ·
-    <a href="https://github.com/emailai/emailai/issues">Issues</a>
+    AI email assistant to automate and manage email inboxes.
   </p>
 </p>
 
-## About
-
-EmailAI is an AI-powered email assistant that helps you:
-
-1. Automate email management and spend less time on email
-2. Use AI to organize, respond to, and manage your inbox intelligently
-
-If you're looking to contribute to the project, we welcome your contributions!
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Felie222%2Femail-ai&env=NEXTAUTH_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,GOOGLE_ENCRYPT_SECRET,GOOGLE_ENCRYPT_SALT,UPSTASH_REDIS_URL,UPSTASH_REDIS_TOKEN,GOOGLE_PUBSUB_TOPIC_NAME,DATABASE_URL)
-
-Thanks to Vercel for sponsoring EmailAI in support of open-source software.
-
 ## Features
 
-- **AI Personal Assistant:** Manages your email for you based on a plain text prompt file. It can take any action a human assistant can take on your behalf (Draft reply, Label, Archive, Reply, Forward, Mark Spam, and even call a webhook).
-- **Reply Zero:** Track emails that need your reply and those awaiting responses.
-- **Smart Categories:** Categorize everyone that's ever emailed you.
-- **Bulk Unsubscriber:** Quickly unsubscribe from emails you never read in one-click.
-- **Cold Email Blocker:** Automatically block cold emails.
-- **Email Analytics:** Track your email activity with daily, weekly, and monthly stats.
+### Core Features
+- **AI Personal Assistant** - Manages your email based on plain text prompts. Takes any action a human assistant can (Draft, Reply, Archive, Label, Forward, Mark Spam, Call Webhooks)
+- **Reply Tracker** - Track emails that need your reply and those awaiting responses
+- **Smart Categories** - Automatically categorize everyone that's ever emailed you
+- **Bulk Unsubscriber** - Quickly unsubscribe from emails you never read in one-click
+- **Cold Email Blocker** - Automatically block cold emails
+- **Email Analytics** - Track your email activity with daily, weekly, and monthly stats
+- **Multi-Tenant Organizations** - Team collaboration, shared email accounts, role-based access control, seat-based billing
 
-Learn more in our [docs](https://docs.emailai.com).
+### AI Features
+- **Multiple AI Models** - OpenAI, Anthropic, Google Gemini, Groq, or local Ollama
+- **Local AI Deployment** - Run Llama 3.1/3.3 models on your own hardware (no cloud costs, 100% private)
+- **Fine-Tuned Models** - Train custom models on each user's email history to write in their unique voice
+- **AI Automation** - Create rules from natural language, auto-categorize, smart replies with knowledge base
+- **Writing Style Learning** - AI learns your tone, formality, and communication patterns
 
-## Feature Screenshots
+📖 [Full AI Features Documentation](./AI_FEATURES_OVERVIEW.md)
 
-| ![AI Assistant](.github/screenshots/email-assistant.png) |        ![Reply Zero](.github/screenshots/reply-zero.png)        |
-| :------------------------------------------------------: | :-------------------------------------------------------------: |
-|                      _AI Assistant_                      |                          _Reply Zero_                           |
-|  ![Gmail Client](.github/screenshots/email-client.png)   | ![Bulk Unsubscriber](.github/screenshots/bulk-unsubscriber.png) |
-|                      _Gmail client_                      |                       _Bulk Unsubscriber_                       |
+---
 
-## Demo Video
+## Quick Start
 
-[![EmailAI demo](/video-thumbnail.png)](http://www.youtube.com/watch?v=hfvKvTHBjG0)
+### 1. Deploy EmailAI Application
 
-## Built with
-
-- [Next.js](https://nextjs.org/)
-- [Tailwind CSS](https://tailwindcss.com/)
-- [shadcn/ui](https://ui.shadcn.com/)
-- [Prisma](https://www.prisma.io/)
-- [Upstash](https://upstash.com/)
-- [Turborepo](https://turbo.build/)
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=emailai/emailai&type=Date)](https://www.star-history.com/#emailai/emailai&Date)
-
-## Feature Requests
-
-To request a feature open a [GitHub issue](https://github.com/emailai/emailai/issues), or join our [Discord](https://www.emailai.com/discord).
-
-## Getting Started for Developers
-
-We offer a hosted version of EmailAI at [https://emailai.com](https://emailai.com). To self-host follow the steps below.
-
-### Setup
-
-[Here's a video](https://youtu.be/hVQENQ4WT2Y) on how to set up the project. It covers the same steps mentioned in this document. But goes into greater detail on setting up the external services.
-
-### Requirements
-
-- [Node.js](https://nodejs.org/en/) >= 18.0.0
-- [pnpm](https://pnpm.io/) >= 8.6.12
-- [Docker desktop](https://www.docker.com/products/docker-desktop/) (recommended but optional)
-
-Make sure you have the above installed before starting.
-
-The external services that are required are (detailed setup instructions below):
-
-- [Google OAuth](https://console.cloud.google.com/apis/credentials)
-- [Google PubSub](https://console.cloud.google.com/cloudpubsub/topic/list)
-
-### Updating .env file: secrets
-
-Create your own `.env` file from the example supplied:
-
+**One-command setup:**
 ```bash
-cp apps/web/.env.example apps/web/.env
-cd apps/web
+git clone https://github.com/your-org/emailai.git
+cd emailai
+bash scripts/setup.sh  # Interactive setup wizard
+```
+
+**Or manual setup:**
+```bash
+# 1. Install dependencies
 pnpm install
-```
 
-Set the environment variables in the newly created `.env`. You can see a list of required variables in: `apps/web/env.ts`.
+# 2. Copy environment file
+cp apps/web/.env.example apps/web/.env
 
-The required environment variables:
+# 3. Configure .env (see Configuration section below)
+# Set: NEXTAUTH_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, etc.
 
-Secrets:
+# 4. Start database
+docker-compose up -d
 
-- `NEXTAUTH_SECRET` -- can be any random string (try using `openssl rand -hex 32` for a quick secure random string)
-- `GOOGLE_ENCRYPT_SECRET` -- Secret key for encrypting OAuth tokens (try using `openssl rand -hex 32` for a secure key)
-- `GOOGLE_ENCRYPT_SALT` -- Salt for encrypting OAuth tokens (try using `openssl rand -hex 16` for a secure salt)
-
-Redis:
-
-- `UPSTASH_REDIS_URL` -- Redis URL from Upstash. (can be empty if you are using Docker Compose)
-- `UPSTASH_REDIS_TOKEN` -- Redis token from Upstash. (or specify your own random string if you are using Docker Compose)
-
-When using Vercel with Fluid Compute turned off, you should set `MAX_DURATION=300` or lower. See Vercel limits for different plans [here](https://vercel.com/docs/functions/configuring-functions/duration#duration-limits).
-
-### Updating .env file with Google OAuth credentials:
-
-- `GOOGLE_CLIENT_ID` -- Google OAuth client ID. More info [here](https://next-auth.js.org/providers/google)
-- `GOOGLE_CLIENT_SECRET` -- Google OAuth client secret. More info [here](https://next-auth.js.org/providers/google)
-
-Go to [Google Cloud](https://console.cloud.google.com/). Create a new project if necessary.
-
-Create [new credentials](https://console.cloud.google.com/apis/credentials):
-
-1.  If the banner shows up, configure **consent screen** (if not, you can do this later)
-    1. Click the banner, then Click `Get Started`.
-    2. Choose a name for your app, and enter your email.
-    3. In Audience, choose `External`
-    4. Enter your contact information
-    5. Agree to the User Data policy and then click `Create`.
-    6. Return to APIs and Services using the left sidebar.
-2.  Create new [credentials](https://console.cloud.google.com/apis/credentials):
-    1. Click the `+Create Credentials` button. Choose OAuth Client ID.
-    2. In `Application Type`, Choose `Web application`
-    3. Choose a name for your web client
-    4. In Authorized JavaScript origins, add a URI and enter `http://localhost:3000`
-    5. In `Authorized redirect URIs` enter `http://localhost:3000/api/auth/callback/google`
-    6. Click `Create`.
-    7. A popup will show up with the new credentials, including the Client ID and secret.
-3.  Update .env file:
-    1. Copy the Client ID to `GOOGLE_CLIENT_ID`
-    2. Copy the Client secret to `GOOGLE_CLIENT_SECRET`
-4.  Update [scopes](https://console.cloud.google.com/auth/scopes)
-
-    1. Go to `Data Access` in the left sidebar (or click link above)
-    2. Click `Add or remove scopes`
-    3. Copy paste the below into the `Manually add scopes` box:
-
-    ```plaintext
-    https://www.googleapis.com/auth/userinfo.profile
-    https://www.googleapis.com/auth/userinfo.email
-    https://www.googleapis.com/auth/gmail.modify
-    https://www.googleapis.com/auth/gmail.settings.basic
-    https://www.googleapis.com/auth/contacts
-    ```
-
-    4. Click `Update`
-    5. Click `Save` in the Data Access page.
-
-5.  Add yourself as a test user
-    1. Go to [Audience](https://console.cloud.google.com/auth/audience)
-    2. In the `Test users` section, click `+Add users`
-    3. Enter your email and press `Save`
-
-### Updating .env file with LLM parameters
-
-You need to set an LLM, but you can use a local one too:
-
-- [Anthropic](https://console.anthropic.com/settings/keys)
-- [OpenAI](https://platform.openai.com/api-keys)
-- AWS Bedrock Anthropic
-- Google Gemini
-- Groq Llama 3.3 70B
-- Ollama (local)
-
-For the LLM, you can use Anthropic, OpenAI, or Anthropic on AWS Bedrock. You
-can also use Ollama by setting the following enviroment variables:
-
-```sh
-OLLAMA_BASE_URL=http://localhost:11434/api
-NEXT_PUBLIC_OLLAMA_MODEL=phi3
-```
-
-Note: If you need to access Ollama hosted locally and the application is running on Docker setup, you can use `http://host.docker.internal:11434/api` as the base URL. You might also need to set `OLLAMA_HOST` to `0.0.0.0` in the Ollama configuration file.
-
-You can select the model you wish to use in the app on the `/settings` page of the app.
-
-If you are using local ollama, you can set it to be default:
-
-```sh
-DEFAULT_LLM_PROVIDER=ollama
-```
-
-### Redis and Postgres
-
-We use Postgres for the database.
-For Redis, you can use [Upstash Redis](https://upstash.com/) or set up your own Redis instance.
-
-You can run Postgres & Redis locally using `docker-compose`
-
-```bash
-docker-compose up -d # -d will run the services in the background
-```
-
-### Running the app
-
-To run the migrations:
-
-```bash
+# 5. Run migrations
 pnpm prisma migrate dev
-```
 
-To run the app locally for development (slower):
-
-```bash
+# 6. Start application
 pnpm run dev
 ```
 
-Or from the project root:
+Open [http://localhost:3000](http://localhost:3000)
+
+📖 [Detailed Setup Guide](./QUICK_START.md)
+
+---
+
+### 2. Deploy Local AI (Optional but Recommended)
+
+**For cost savings and privacy, deploy Ollama on separate server:**
 
 ```bash
-turbo dev
+# On your AI server (or Vast.ai GPU instance)
+cd ollama-server/scripts
+sudo bash setup.sh prod  # Installs Ollama + Llama 3.3 70B
+
+# Configure EmailAI to use it (.env):
+# OLLAMA_BASE_URL=http://your-ollama-server:11434/api
+# NEXT_PUBLIC_OLLAMA_MODEL=llama3.3:70b
+# DEFAULT_LLM_PROVIDER=ollama
 ```
 
-To build and run the app locally in production mode (faster):
+📖 [Ollama Deployment Guide](./ollama-server/README.md)
+📖 [Vast.ai GPU Rental Guide](./ollama-server/docs/VASTAI_DEPLOYMENT.md)
+
+**Cost comparison:**
+- **Local Ollama on Vast.ai**: ~$84/month (8h/day) or ~$150/month (24/7)
+- **OpenAI/Anthropic APIs**: ~$300-500/month for moderate usage
+- **Self-hosted on existing hardware**: $0/month
+
+---
+
+### 3. Fine-Tune for User Voice (Optional - Premium Feature)
+
+**Train AI to write emails in each user's unique style:**
 
 ```bash
-pnpm run build
-pnpm start
+cd ollama-server/fine-tuning
+
+# 1. Extract training data from user's sent emails
+python scripts/prepare-email-data.py \
+  --db-url "$DATABASE_URL" \
+  --user-id "user123" \
+  --output ./training-data
+
+# 2. Fine-tune model (2-4 hours on Vast.ai RTX 4090, ~$1-2 cost)
+python scripts/finetune-lora.py \
+  --config configs/lora-config-8b.yaml
+
+# 3. Deploy to Ollama
+bash scripts/deploy-to-ollama.sh \
+  --model ./output/llama-3.1-8b-email \
+  --user-id "user123"
+
+# 4. Configure EmailAI to use it
+# NEXT_PUBLIC_OLLAMA_MODEL=emailai-user123
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to view the app in your browser.
+**Before fine-tuning:**
+> Dear Team, I am writing to provide an update on the project status...
 
-### Premium
+**After fine-tuning:**
+> Hey team! Quick update - we finished design yesterday and starting dev next week. Pretty excited! 🚀
 
-Many features are available only to premium users. To upgrade yourself, make yourself an admin in the `.env`: `ADMINS=hello@gmail.com`
-Then upgrade yourself at: [http://localhost:3000/admin](http://localhost:3000/admin).
+📖 [Fine-Tuning Guide](./ollama-server/fine-tuning/README.md)
+📖 [Complete Workflow](./ollama-server/fine-tuning/docs/FINE_TUNING_GUIDE.md)
 
-### Set up push notifications via Google PubSub to handle emails in real time
+---
 
-Follow instructions [here](https://developers.google.com/gmail/api/guides/push).
+## Configuration
 
-1. [Create a topic](https://developers.google.com/gmail/api/guides/push#create_a_topic)
-2. [Create a subscription](https://developers.google.com/gmail/api/guides/push#create_a_subscription)
-3. [Grant publish rights on your topic](https://developers.google.com/gmail/api/guides/push#grant_publish_rights_on_your_topic)
+### Required Environment Variables
 
-Set env var `GOOGLE_PUBSUB_TOPIC_NAME`.
-When creating the subscription select Push and the url should look something like: `https://www.emailai.com/api/google/webhook?token=TOKEN` or `https://abc.ngrok-free.app/api/google/webhook?token=TOKEN` where the domain is your domain. Set `GOOGLE_PUBSUB_VERIFICATION_TOKEN` in your `.env` file to be the value of `TOKEN`.
+**Create `apps/web/.env` with:**
 
-To run in development ngrok can be helpful:
+```bash
+# Database
+DATABASE_URL="postgresql://postgres:password@localhost:5432/emailai"
+DIRECT_URL="postgresql://postgres:password@localhost:5432/emailai"
 
-```sh
-ngrok http 3000
-# or with an ngrok domain to keep your endpoint stable (set `XYZ`):
-ngrok http --domain=XYZ.ngrok-free.app 3000
+# Auth (generate with: openssl rand -hex 32)
+NEXTAUTH_SECRET="your-random-secret-here"
+NEXTAUTH_URL="http://localhost:3000"
+
+# Google OAuth
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
+GOOGLE_ENCRYPT_SECRET="your-encrypt-secret"  # openssl rand -hex 32
+GOOGLE_ENCRYPT_SALT="your-encrypt-salt"      # openssl rand -hex 16
+
+# Google PubSub (for real-time email updates)
+GOOGLE_PUBSUB_TOPIC_NAME="projects/abc/topics/xyz"
+GOOGLE_PUBSUB_VERIFICATION_TOKEN="your-token"
+
+# AI Provider (choose one or use local Ollama)
+DEFAULT_LLM_PROVIDER=ollama  # or: openai, anthropic, google, groq
+
+# Option 1: Local Ollama (recommended for cost/privacy)
+OLLAMA_BASE_URL=http://localhost:11434/api
+NEXT_PUBLIC_OLLAMA_MODEL=llama3.3:70b
+
+# Option 2: Cloud API (Groq is fastest/cheapest)
+# GROQ_API_KEY=your-groq-api-key
+
+# Option 3: OpenAI
+# OPENAI_API_KEY=your-openai-api-key
+
+# Option 4: Anthropic
+# ANTHROPIC_API_KEY=your-anthropic-api-key
+
+# Redis
+UPSTASH_REDIS_URL="http://localhost:8079"
+UPSTASH_REDIS_TOKEN="your-token"
+
+# Internal
+INTERNAL_API_KEY="your-internal-key"  # openssl rand -hex 32
 ```
 
-And then update the webhook endpoint in the [Google PubSub subscriptions dashboard](https://console.cloud.google.com/cloudpubsub/subscription/list).
+### Google OAuth Setup
 
-To start watching emails visit: `/api/google/watch/all`
+1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+2. Create OAuth 2.0 Client ID
+3. Add authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
+4. Add scopes:
+   ```
+   https://www.googleapis.com/auth/userinfo.profile
+   https://www.googleapis.com/auth/userinfo.email
+   https://www.googleapis.com/auth/gmail.modify
+   https://www.googleapis.com/auth/gmail.settings.basic
+   https://www.googleapis.com/auth/contacts
+   ```
+5. Add yourself as test user
+6. Copy Client ID and Secret to `.env`
 
-### Watching for email updates
+📖 [Full Configuration Guide](./apps/web/.env.example)
 
-Set a cron job to run these:
-The Google watch is necessary. Others are optional.
+---
 
-```json
-  "crons": [
-    {
-      "path": "/api/google/watch/all",
-      "schedule": "0 1 * * *"
-    },
-    {
-      "path": "/api/resend/summary/all",
-      "schedule": "0 16 * * 1"
-    },
-    {
-      "path": "/api/reply-tracker/disable-unused-auto-draft",
-      "schedule": "0 3 * * *"
-    }
-  ]
+## Architecture
+
+```
+┌──────────────────┐
+│   EmailAI App    │  ← Main application (Next.js)
+│   (Port 3000)    │
+└────────┬─────────┘
+         │
+         ├─→ PostgreSQL (Database)
+         ├─→ Redis (Cache/Queue)
+         ├─→ Google Gmail API
+         └─→ AI Provider
+              │
+              ├─→ Ollama Server (Local AI) ← Recommended
+              ├─→ OpenAI API
+              ├─→ Anthropic API
+              └─→ Groq API
 ```
 
-[Here](https://vercel.com/guides/how-to-setup-cron-jobs-on-vercel#alternative-cron-providers) are some easy ways to run cron jobs. Upstash is a free, easy option. I could never get the Vercel `vercel.json`. Open to PRs if you find a fix for that.
+### Multi-Tenant Architecture
 
-### Contributing to the project
+```
+User ──→ Organization ──→ Email Accounts (shared)
+  │            │
+  │            ├─→ Rules (shared)
+  │            ├─→ Knowledge Base (shared)
+  │            ├─→ Categories (shared)
+  │            └─→ Premium Subscription (seat-based)
+  │
+  └─→ Fine-Tuned AI Model (personalized)
+```
 
-You can view open tasks in our [GitHub Issues](https://github.com/emailai/emailai/issues).
-Join our [Discord](https://www.emailai.com/discord) to discuss tasks and check what's being worked on.
+📖 [Architecture Details](./ARCHITECTURE.md)
+📖 [Multi-Tenant Implementation](./MULTI_TENANT_IMPLEMENTATION.md)
 
-[ARCHITECTURE.md](./ARCHITECTURE.md) explains the architecture of the project (LLM generated).
+---
+
+## Documentation
+
+### Setup & Deployment
+- [Quick Start](./QUICK_START.md) - One-command setup wizard
+- [Deployment Guide](./docs/DEPLOYMENT_GUIDE.md) - Production deployment
+- [Migration Runbook](./docs/MIGRATION_RUNBOOK.md) - Database migrations
+
+### AI & Ollama
+- [AI Features Overview](./AI_FEATURES_OVERVIEW.md) - All AI capabilities
+- [Ollama Deployment](./ollama-server/README.md) - Local AI setup
+- [Vast.ai Guide](./ollama-server/docs/VASTAI_DEPLOYMENT.md) - GPU rental
+- [Fine-Tuning Guide](./ollama-server/fine-tuning/README.md) - User voice training
+
+### Administration
+- [User Guide](./docs/USER_GUIDE_ORGANIZATIONS.md) - For end users
+- [Admin Guide](./docs/ADMIN_GUIDE.md) - For administrators
+- [API Documentation](./docs/API_DOCUMENTATION.md) - API reference
+- [Monitoring Setup](./docs/MONITORING_SETUP.md) - Observability
+
+### Features
+- [Features Status](./docs/FEATURES_STATUS.md) - Implementation status
+- [Pricing & Features](./docs/PRICING_AND_FEATURES.md) - Tier comparison
+
+---
+
+## Tech Stack
+
+- **Frontend**: Next.js 14+, React 18+, Tailwind CSS, shadcn/ui
+- **Backend**: Next.js API Routes, Prisma ORM
+- **Database**: PostgreSQL 14+
+- **Cache**: Redis (Upstash)
+- **Auth**: NextAuth.js with Google OAuth
+- **AI**: OpenAI, Anthropic, Google Gemini, Groq, Ollama (local)
+- **Payments**: Stripe, LemonSqueezy
+- **Monitoring**: Sentry, PostHog, Axiom
+
+---
+
+## Premium Features
+
+**Upgrade yourself to premium (for development):**
+```bash
+# 1. Set yourself as admin in .env
+ADMINS=your-email@gmail.com
+
+# 2. Visit admin panel
+http://localhost:3000/admin
+
+# 3. Upgrade yourself to Premium tier
+```
+
+**Premium tiers:**
+- **Free**: 1 email account, 5 rules, basic features
+- **Basic** ($15/month): Unlimited accounts, advanced automation, AI features
+- **Business** ($20/month + seats): Multi-tenant organizations, team collaboration
+- **Enterprise** (Custom): On-premise, white-label, dedicated support
+
+📖 [Pricing Details](./docs/PRICING_AND_FEATURES.md)
+
+---
+
+## Support & Contributing
+
+- **Issues**: [GitHub Issues](https://github.com/emailai/emailai/issues)
+- **Discord**: [Join Discord](https://www.emailai.com/discord)
+- **Documentation**: [docs.emailai.com](https://docs.emailai.com)
+
+**Contributing:**
+- View open tasks in [GitHub Issues](https://github.com/emailai/emailai/issues)
+- Join [Discord](https://www.emailai.com/discord) to discuss
+- Read [ARCHITECTURE.md](./ARCHITECTURE.md) to understand the codebase
+
+---
+
+## License
+
+MIT License - See LICENSE file for details
+
+**Model Licenses:**
+- Llama 3: [Meta Llama License](https://llama.meta.com/llama3/license/)
+- Other models: Check individual model licenses
+
+---
+
+## Quick Reference Commands
+
+```bash
+# Development
+pnpm run dev              # Start dev server
+pnpm run build            # Build for production
+pnpm start                # Start production server
+pnpm test                 # Run tests
+pnpm lint                 # Run linter
+
+# Database
+pnpm prisma migrate dev   # Run migrations
+pnpm prisma studio        # Open DB GUI
+docker-compose up -d      # Start local DB + Redis
+
+# Ollama (local AI)
+cd ollama-server/scripts
+sudo bash setup.sh prod   # Install Ollama + model
+
+# Fine-tuning
+cd ollama-server/fine-tuning
+python scripts/prepare-email-data.py --user-id "user123" --output ./training-data
+python scripts/finetune-lora.py --config configs/lora-config-8b.yaml
+bash scripts/deploy-to-ollama.sh --model ./output/llama-3.1-8b-email --user-id "user123"
+```
+
+---
+
+**Ready to start?** Run: `bash scripts/setup.sh` 🚀
