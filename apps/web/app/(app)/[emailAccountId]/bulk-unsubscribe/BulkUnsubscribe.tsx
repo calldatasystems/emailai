@@ -60,7 +60,7 @@ export function BulkUnsubscribe() {
             <>
               Learn how to quickly bulk unsubscribe from unwanted emails. You
               can read more in our{" "}
-              <TextLink href="https://docs.calldata.app/essentials/bulk-email-unsubscriber">
+              <TextLink href="https://docs.emailai.com/essentials/bulk-email-unsubscriber">
                 documentation
               </TextLink>
               .

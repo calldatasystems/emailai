@@ -14,6 +14,7 @@ import { SCOPES } from "@/utils/gmail/scopes";
 import { getContactsClient } from "@/utils/gmail/client";
 import { encryptToken } from "@/utils/encryption";
 import { updateAccountSeats } from "@/utils/premium/server";
+import { getUserDefaultOrganization } from "@/utils/organization";
 
 const logger = createScopedLogger("auth");
 
@@ -116,7 +117,10 @@ export const getAuthOptions: (options?: {
           select: { id: true, userId: true },
         });
 
-        // --- Step 3: Create/Update the corresponding EmailAccount record ---
+        // --- Step 3: Get user's default organization ---
+        const defaultOrg = await getUserDefaultOrganization(createdAccount.userId);
+
+        // --- Step 4: Create/Update the corresponding EmailAccount record ---
         const userId = createdAccount.userId;
         const emailAccountData: Prisma.EmailAccountUpsertArgs = {
           where: { email: primaryEmail },
@@ -125,6 +129,8 @@ export const getAuthOptions: (options?: {
             accountId: createdAccount.id,
             name: primaryName,
             image: primaryPhotoUrl,
+            // Update organization if not already set
+            ...(defaultOrg?.id ? { organizationId: defaultOrg.id } : {}),
           },
           create: {
             email: primaryEmail,
@@ -132,6 +138,8 @@ export const getAuthOptions: (options?: {
             accountId: createdAccount.id,
             name: primaryName,
             image: primaryPhotoUrl,
+            // Link to user's default organization
+            organizationId: defaultOrg?.id,
           },
         };
         await prisma.emailAccount.upsert(emailAccountData);
@@ -197,6 +205,16 @@ export const getAuthOptions: (options?: {
         token.expires_at = account.expires_at;
         token.user = user;
 
+        // Load default organization context (multi-tenant)
+        if (user.id) {
+          const defaultOrg = await getUserDefaultOrganization(user.id);
+          if (defaultOrg) {
+            token.organizationId = defaultOrg.id;
+            token.organizationSlug = defaultOrg.slug;
+            token.organizationRole = defaultOrg.role;
+          }
+        }
+
         return token;
       }
 
@@ -246,6 +264,11 @@ export const getAuthOptions: (options?: {
       // based on: https://github.com/nextauthjs/next-auth/issues/1162#issuecomment-766331341
       session.accessToken = token?.access_token as string | undefined;
       session.error = token?.error as string | undefined;
+
+      // Include organization context in session (multi-tenant)
+      session.organizationId = token.organizationId as string | undefined;
+      session.organizationSlug = token.organizationSlug as string | undefined;
+      session.organizationRole = token.organizationRole as typeof token.organizationRole;
 
       if (session.error) {
         logger.error("session.error", {

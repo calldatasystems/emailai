@@ -11,9 +11,9 @@ export function Privacy() {
             host it yourself.
           </p>
           <p className="mt-6 text-lg leading-8 text-gray-600">
-            Inbox Zero has undergone a thorough security process with Google to
-            ensure the protection of your emails. You can even self-host Inbox
-            Zero on your own infrastructure.
+            EmailAI has undergone a thorough security process with Google to
+            ensure the protection of your emails. You can even self-host EmailAI
+            on your own infrastructure.
           </p>
           <p className="mt-2 text-lg leading-8 text-gray-600">
             We're CASA Tier 2 approved and your data is never used to train

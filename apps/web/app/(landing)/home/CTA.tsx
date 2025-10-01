@@ -19,11 +19,11 @@ export function CTA() {
         <h2 className="font-cal text-3xl text-gray-900 sm:text-4xl">
           Boost your productivity.
           <br />
-          Start using Inbox Zero today.
+          Start using EmailAI today.
         </h2>
         <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-gray-600">
-          Inbox Zero uses AI to help you empty your inbox daily. What previously
-          took hours, now takes minutes. Inbox Zero is your virtual assistant
+          EmailAI uses AI to help you empty your inbox daily. What previously
+          took hours, now takes minutes. EmailAI is your virtual assistant
           for emails.
         </p>
         <CTAButtons />

@@ -74,7 +74,62 @@ model User {
 
   apiKeys ApiKey[]
 
+  emailAccounts       EmailAccount[]
+  organizationMembers OrganizationMember[]
+
+  // Shared resource tracking (multi-tenant)
+  createdRules      Rule[]      @relation("RuleCreator")
+  createdGroups     Group[]     @relation("GroupCreator")
+  createdKnowledge  Knowledge[] @relation("KnowledgeCreator")
+  createdCategories Category[]  @relation("CategoryCreator")
+}
+
+// Multi-tenant organization model
+model Organization {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  name String
+  slug String @unique // for subdomain/custom domains
+
+  // Settings
+  domain  String? @unique // Custom domain
+  logoUrl String?
+
+  // Relationships
+  members       OrganizationMember[]
   emailAccounts EmailAccount[]
+
+  // Billing (organization-level premium)
+  premiumId String?
+  premium   Premium? @relation(fields: [premiumId], references: [id])
+
+  @@index([slug])
+}
+
+model OrganizationMember {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  role OrganizationRole @default(MEMBER)
+
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+  @@index([userId])
+}
+
+enum OrganizationRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
 }
 
 // Migrating over to the new settings model. Currently most settings are in the User model, but will be moved to this model in the future.
@@ -108,6 +163,10 @@ model EmailAccount {
   accountId String  @unique
   account   Account @relation(fields: [accountId], references: [id], onDelete: Cascade)
 
+  // Organization relationship (multi-tenant)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
   labels         Label[]
   rules          Rule[]
   executedRules  ExecutedRule[]
@@ -123,6 +182,7 @@ model EmailAccount {
   knowledge      Knowledge[]
 
   @@index([lastSummaryEmailAt])
+  @@index([organizationId])
 }
 
 model Premium {
@@ -132,6 +192,13 @@ model Premium {
 
   users  User[] @relation(name: "userPremium")
   admins User[]
+
+  // Organization-based billing (multi-tenant)
+  organizations Organization[]
+
+  // Seat-based billing
+  maxSeats  Int? // Maximum allowed seats (null = unlimited)
+  usedSeats Int  @default(1) // Currently active seats
 
   pendingInvites String[]
 
@@ -218,6 +285,11 @@ model Rule {
 
   executedRules ExecutedRule[]
 
+  // Shared resources (multi-tenant)
+  createdBy String?
+  creator   User?   @relation("RuleCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  isShared  Boolean @default(false) // if true, visible to all org members
+
   // conditions: ai, group, static, category
   conditionalOperator LogicalOperator @default(AND)
 
@@ -244,6 +316,8 @@ model Rule {
 
   @@unique([name, emailAccountId])
   @@unique([emailAccountId, systemType])
+  @@index([emailAccountId, isShared])
+  @@index([createdBy])
 }
 
 model Action {
@@ -332,7 +406,14 @@ model Group {
   emailAccountId String
   emailAccount   EmailAccount @relation(fields: [emailAccountId], references: [id], onDelete: Cascade)
 
+  // Shared resources (multi-tenant)
+  createdBy String?
+  creator   User?   @relation("GroupCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  isShared  Boolean @default(false) // if true, visible to all org members
+
   @@unique([name, emailAccountId])
+  @@index([emailAccountId, isShared])
+  @@index([createdBy])
 }
 
 model GroupItem {
@@ -360,7 +441,14 @@ model Category {
   emailSenders Newsletter[]
   rules        Rule[]
 
+  // Shared resources (multi-tenant)
+  createdBy String?
+  creator   User?   @relation("CategoryCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  isShared  Boolean @default(false) // if true, visible to all org members
+
   @@unique([name, emailAccountId])
+  @@index([emailAccountId, isShared])
+  @@index([createdBy])
 }
 
 // Represents a sender (`email`) that a user can unsubscribe from,
@@ -492,7 +580,14 @@ model Knowledge {
   emailAccountId String
   emailAccount   EmailAccount @relation(fields: [emailAccountId], references: [id])
 
+  // Shared resources (multi-tenant)
+  createdBy String?
+  creator   User?   @relation("KnowledgeCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  isShared  Boolean @default(false) // if true, visible to all org members
+
   @@unique([emailAccountId, title])
+  @@index([emailAccountId, isShared])
+  @@index([createdBy])
 }
 
 model ApiKey {

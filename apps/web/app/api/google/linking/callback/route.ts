@@ -5,6 +5,7 @@ import { createScopedLogger } from "@/utils/logger";
 import { getLinkingOAuth2Client } from "@/utils/gmail/client";
 import { GOOGLE_LINKING_STATE_COOKIE_NAME } from "@/utils/gmail/constants";
 import { withError } from "@/utils/middleware";
+import { getUserDefaultOrganization } from "@/utils/organization";
 
 const logger = createScopedLogger("google/linking/callback");
 
@@ -118,6 +119,10 @@ export const GET = withError(async (request: NextRequest) => {
     logger.info(
       `Merging Google account ${providerEmail} (${providerAccountId}) linked to user ${existingAccount.userId}, merging into ${targetUserId}.`,
     );
+
+    // Get target user's default organization
+    const targetUserOrg = await getUserDefaultOrganization(targetUserId);
+
     await prisma.$transaction([
       prisma.account.update({
         where: { id: existingAccount.id },
@@ -129,6 +134,8 @@ export const GET = withError(async (request: NextRequest) => {
           userId: targetUserId,
           name: existingAccount.user.name,
           email: existingAccount.user.email,
+          // Link to target user's organization
+          organizationId: targetUserOrg?.id,
         },
       }),
       prisma.user.delete({

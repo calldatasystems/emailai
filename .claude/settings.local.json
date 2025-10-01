@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout:*)",
+      "Bash(find:*)",
+      "Bash(git -C /mnt/c/Users/aqorn/Documents/CODE/emailai status --short)",
+      "Bash(git -C /mnt/c/Users/aqorn/Documents/CODE/emailai diff --name-status)",
+      "Bash(git -C /mnt/c/Users/aqorn/Documents/CODE/emailai diff --stat)",
+      "Bash(npx prisma migrate dev:*)",
+      "Bash(chmod:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

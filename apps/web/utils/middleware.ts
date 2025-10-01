@@ -10,6 +10,8 @@ import {
   EMAIL_ACCOUNT_HEADER,
   NO_REFRESH_TOKEN_ERROR_CODE,
 } from "@/utils/config";
+import type { OrganizationRole } from "@prisma/client";
+import { isOrganizationMember } from "@/utils/organization";
 
 const logger = createScopedLogger("middleware");
 
@@ -22,6 +24,8 @@ export type NextHandler<T extends NextRequest = NextRequest> = (
 export interface RequestWithAuth extends NextRequest {
   auth: {
     userId: string;
+    organizationId?: string;
+    organizationRole?: OrganizationRole;
   };
 }
 
@@ -30,6 +34,16 @@ export interface RequestWithEmailAccount extends NextRequest {
     userId: string;
     emailAccountId: string;
     email: string;
+    organizationId?: string;
+    organizationRole?: OrganizationRole;
+  };
+}
+
+export interface RequestWithOrganization extends NextRequest {
+  auth: {
+    userId: string;
+    organizationId: string;
+    organizationRole: OrganizationRole;
   };
 }
 
@@ -136,9 +150,13 @@ async function authMiddleware(
     );
   }
 
-  // Create a new request with auth info
+  // Create a new request with auth info (including organization context)
   const authReq = req.clone() as RequestWithAuth;
-  authReq.auth = { userId: session.user.id };
+  authReq.auth = {
+    userId: session.user.id,
+    organizationId: session.organizationId,
+    organizationRole: session.organizationRole,
+  };
 
   return authReq;
 }
@@ -171,11 +189,55 @@ async function emailAccountMiddleware(
     );
   }
 
-  // Create a new request with email account info
+  // Create a new request with email account info (including organization context)
   const emailAccountReq = req.clone() as RequestWithEmailAccount;
-  emailAccountReq.auth = { userId, emailAccountId, email };
+  emailAccountReq.auth = {
+    userId,
+    emailAccountId,
+    email,
+    organizationId: authReq.auth.organizationId,
+    organizationRole: authReq.auth.organizationRole,
+  };
 
   return emailAccountReq;
+}
+
+async function organizationMiddleware(
+  req: NextRequest,
+): Promise<RequestWithOrganization | Response> {
+  const authReq = await authMiddleware(req);
+  if (authReq instanceof Response) return authReq;
+
+  const userId = authReq.auth.userId;
+  const organizationId = authReq.auth.organizationId;
+  const organizationRole = authReq.auth.organizationRole;
+
+  // Ensure user has an organization in their session
+  if (!organizationId || !organizationRole) {
+    return NextResponse.json(
+      { error: "No organization context found", isKnownError: true },
+      { status: 403 },
+    );
+  }
+
+  // Verify user is still a member of the organization
+  const isMember = await isOrganizationMember(userId, organizationId);
+  if (!isMember) {
+    return NextResponse.json(
+      { error: "You are not a member of this organization", isKnownError: true },
+      { status: 403 },
+    );
+  }
+
+  // Create a new request with organization info
+  const orgReq = req.clone() as RequestWithOrganization;
+  orgReq.auth = {
+    userId,
+    organizationId,
+    organizationRole,
+  };
+
+  return orgReq;
 }
 
 // Public middlewares that build on the common infrastructure
@@ -191,6 +253,12 @@ export function withEmailAccount(
   handler: NextHandler<RequestWithEmailAccount>,
 ): NextHandler {
   return withMiddleware(handler, emailAccountMiddleware);
+}
+
+export function withOrganization(
+  handler: NextHandler<RequestWithOrganization>,
+): NextHandler {
+  return withMiddleware(handler, organizationMiddleware);
 }
 
 function isErrorWithConfigAndHeaders(

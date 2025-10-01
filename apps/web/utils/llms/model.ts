@@ -79,8 +79,8 @@ function selectModel(
       const openrouter = createOpenRouter({
         apiKey: aiApiKey || env.OPENROUTER_API_KEY,
         headers: {
-          "HTTP-Referer": "https://www.calldata.app",
-          "X-Title": "Inbox Zero",
+          "HTTP-Referer": "https://www.emailai.com",
+          "X-Title": "EmailAI",
         },
       });
       const chatModel = openrouter.chat(model);

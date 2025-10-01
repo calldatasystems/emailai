@@ -15,7 +15,7 @@ async function getBlogPosts() {
     query: postSlugsQuery,
   });
   return posts.map((post) => ({
-    url: `https://www.calldata.app/blog/post/${post.slug}`,
+    url: `https://www.emailai.com/blog/post/${post.slug}`,
     lastModified: new Date(post.date),
   }));
 }
@@ -28,65 +28,65 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const staticUrls = [
     {
-      url: "https://www.calldata.app/",
+      url: "https://www.emailai.com/",
       priority: 1,
     },
     {
-      url: "https://www.calldata.app/bulk-email-unsubscriber",
+      url: "https://www.emailai.com/bulk-email-unsubscriber",
     },
     {
-      url: "https://www.calldata.app/ai-automation",
+      url: "https://www.emailai.com/ai-automation",
     },
     {
-      url: "https://www.calldata.app/email-analytics",
+      url: "https://www.emailai.com/email-analytics",
     },
     {
-      url: "https://www.calldata.app/block-cold-emails",
+      url: "https://www.emailai.com/block-cold-emails",
     },
     {
-      url: "https://www.calldata.app/privacy",
+      url: "https://www.emailai.com/privacy",
     },
     {
-      url: "https://www.calldata.app/terms",
+      url: "https://www.emailai.com/terms",
     },
     {
-      url: "https://www.calldata.app/blog",
+      url: "https://www.emailai.com/blog",
       changeFrequency: "daily",
       lastModified: new Date(),
       priority: 1,
     },
     {
-      url: "https://www.calldata.app/blog/post/how-my-open-source-saas-hit-first-on-product-hunt",
+      url: "https://www.emailai.com/blog/post/how-my-open-source-saas-hit-first-on-product-hunt",
     },
     {
-      url: "https://www.calldata.app/blog/post/why-build-an-open-source-saas",
+      url: "https://www.emailai.com/blog/post/why-build-an-open-source-saas",
     },
     {
-      url: "https://www.calldata.app/blog/post/alternatives-to-skiff-mail",
+      url: "https://www.emailai.com/blog/post/alternatives-to-skiff-mail",
     },
     {
-      url: "https://www.calldata.app/blog/post/best-email-unsubscribe-app",
+      url: "https://www.emailai.com/blog/post/best-email-unsubscribe-app",
     },
     {
-      url: "https://www.calldata.app/blog/post/bulk-unsubscribe-from-emails",
+      url: "https://www.emailai.com/blog/post/bulk-unsubscribe-from-emails",
     },
     {
-      url: "https://www.calldata.app/blog/post/escape-email-trap-unsubscribe-for-good",
+      url: "https://www.emailai.com/blog/post/escape-email-trap-unsubscribe-for-good",
     },
     {
-      url: "https://docs.calldata.app/",
+      url: "https://docs.emailai.com/",
     },
     {
-      url: "https://docs.calldata.app/introduction",
+      url: "https://docs.emailai.com/introduction",
     },
     {
-      url: "https://docs.calldata.app/essentials/email-ai-automation",
+      url: "https://docs.emailai.com/essentials/email-ai-automation",
     },
     {
-      url: "https://docs.calldata.app/essentials/bulk-email-unsubscriber",
+      url: "https://docs.emailai.com/essentials/bulk-email-unsubscriber",
     },
     {
-      url: "https://docs.calldata.app/essentials/cold-email-blocker",
+      url: "https://docs.emailai.com/essentials/cold-email-blocker",
     },
   ];
 

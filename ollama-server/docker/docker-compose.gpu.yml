@@ -1,0 +1,65 @@
+version: '3.8'
+
+# Docker Compose configuration for Ollama with GPU support
+# Requires: nvidia-docker2 installed
+#
+# Usage:
+#   docker-compose -f docker-compose.gpu.yml up -d
+
+services:
+  ollama-gpu:
+    image: ollama/ollama:latest
+    container_name: emailai-ollama-gpu
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-gpu-data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+      - OLLAMA_ORIGINS=*
+      - OLLAMA_NUM_PARALLEL=4
+      - OLLAMA_MAX_LOADED_MODELS=1
+      - OLLAMA_GPU_LAYERS=999  # Use all available GPU layers
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all  # Use all available GPUs
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - ollama-network
+
+  # Optional: Ollama Web UI for easy model management
+  ollama-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: emailai-ollama-webui
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama-gpu:11434
+      - WEBUI_AUTH=false  # Set to true in production
+    volumes:
+      - ollama-webui-data:/app/backend/data
+    depends_on:
+      - ollama-gpu
+    networks:
+      - ollama-network
+
+volumes:
+  ollama-gpu-data:
+    driver: local
+  ollama-webui-data:
+    driver: local
+
+networks:
+  ollama-network:
+    driver: bridge

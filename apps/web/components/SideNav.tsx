@@ -51,6 +51,7 @@ import { LoadingContent } from "@/components/LoadingContent";
 import { useCleanerEnabled } from "@/hooks/useFeatureFlags";
 import { ClientOnly } from "@/components/ClientOnly";
 import { AccountSwitcher } from "@/components/AccountSwitcher";
+import { OrganizationSwitcher } from "@/components/OrganizationSwitcher";
 import { useAccount } from "@/providers/EmailAccountProvider";
 import { prefixPath } from "@/utils/path";
 
@@ -136,7 +137,7 @@ const bottomLinks: NavItem[] = [
   // },
   {
     name: "Help Center",
-    href: "https://docs.calldata.app",
+    href: "https://docs.emailai.com",
     target: "_blank",
     icon: BookIcon,
   },
@@ -184,6 +185,7 @@ const bottomLinks: NavItem[] = [
   },
   { name: "Premium", href: "/premium", icon: CrownIcon },
   { name: "Settings", href: "/settings", icon: CogIcon },
+  { name: "Organization", href: "/organization/settings", icon: Users2Icon },
 ];
 
 const topMailLinks: NavItem[] = [
@@ -269,6 +271,9 @@ export function SideNav({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </div>
           </Link>
         ) : null}
+        <ClientOnly>
+          <OrganizationSwitcher />
+        </ClientOnly>
         <AccountSwitcher />
       </SidebarHeader>
 
