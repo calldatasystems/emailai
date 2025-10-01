@@ -31,64 +31,83 @@
 
 ## Quick Start
 
-### 1. Deploy EmailAI Application
+### 1. Local Development Setup
 
 **One-command setup:**
 ```bash
 git clone https://github.com/your-org/emailai.git
 cd emailai
-bash scripts/setup.sh  # Interactive setup wizard
+bash scripts/setup.sh  # Interactive setup wizard for local development
 ```
 
-**Or manual setup:**
-```bash
-# 1. Install dependencies
-pnpm install
+This sets up everything locally: database, environment variables, dependencies, and migrations.
 
-# 2. Copy environment file
-cp apps/web/.env.example apps/web/.env
+**Access locally:** [http://localhost:3000](http://localhost:3000)
 
-# 3. Configure .env (see Configuration section below)
-# Set: NEXTAUTH_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, etc.
-
-# 4. Start database
-docker-compose up -d
-
-# 5. Run migrations
-pnpm prisma migrate dev
-
-# 6. Start application
-pnpm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000)
-
-📖 [Detailed Setup Guide](./QUICK_START.md)
+📖 [Detailed Local Setup Guide](./QUICK_START.md)
 
 ---
 
-### 2. Deploy Local AI (Optional but Recommended)
+### 1b. Production Deployment
 
-**For cost savings and privacy, deploy Ollama on separate server:**
+**Automated production deployment to calldata.app:**
+
+```bash
+# Step 1: Collect configuration (interactive)
+bash scripts/deploy-config.sh
+
+# Step 2: Deploy to production
+bash scripts/deploy.sh
+```
+
+The deployment scripts will:
+- Deploy web app to Vercel (emailai.calldata.app)
+- Setup database (Neon/Supabase/AWS RDS)
+- Configure Redis (Upstash/ElastiCache)
+- Setup DNS (Cloudflare/Route 53)
+- Deploy AI server (Vast.ai/AWS EC2)
+
+**Access production:** [https://emailai.calldata.app](https://emailai.calldata.app)
+
+**Cost:** $84-500/month depending on scale
+
+📖 [Deployment Scripts Guide](./scripts/README.md)
+📖 [AWS vs Vercel Comparison](./docs/DEPLOYMENT_COMPARISON_AWS_VS_VERCEL.md)
+
+---
+
+### 2. Deploy Shared AI Infrastructure (Optional but Recommended)
+
+**Deploy Ollama on shared AI server for all calldata.app products:**
 
 ```bash
 # On your AI server (or Vast.ai GPU instance)
 cd ollama-server/scripts
 sudo bash setup.sh prod  # Installs Ollama + Llama 3.3 70B
 
-# Configure EmailAI to use it (.env):
-# OLLAMA_BASE_URL=http://your-ollama-server:11434/api
+# Configure EmailAI to use shared AI infrastructure (.env):
+# Production: Use ai.calldata.app domain
+# OLLAMA_BASE_URL=https://ai.calldata.app/api
 # NEXT_PUBLIC_OLLAMA_MODEL=llama3.3:70b
 # DEFAULT_LLM_PROVIDER=ollama
+
+# Development: Use direct IP or Vast.ai URL
+# OLLAMA_BASE_URL=http://localhost:11434/api
+# OLLAMA_BASE_URL=http://ssh5.vast.ai:41134/api
 ```
 
 📖 [Ollama Deployment Guide](./ollama-server/README.md)
 📖 [Vast.ai GPU Rental Guide](./ollama-server/docs/VASTAI_DEPLOYMENT.md)
 
 **Cost comparison:**
-- **Local Ollama on Vast.ai**: ~$84/month (8h/day) or ~$150/month (24/7)
+- **Shared Ollama on Vast.ai**: ~$84/month (8h/day) or ~$150/month (24/7)
 - **OpenAI/Anthropic APIs**: ~$300-500/month for moderate usage
 - **Self-hosted on existing hardware**: $0/month
+
+**Benefits of shared AI infrastructure:**
+- Single Ollama instance serves EmailAI, Foundations, and future calldata.app products
+- Cost-effective: One GPU serves multiple applications
+- Consistent AI performance across all products
 
 ---
 
@@ -182,7 +201,9 @@ INTERNAL_API_KEY="your-internal-key"  # openssl rand -hex 32
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
 2. Create OAuth 2.0 Client ID
-3. Add authorized redirect URI: `http://localhost:3000/api/auth/callback/google`
+3. Add authorized redirect URIs:
+   - Local: `http://localhost:3000/api/auth/callback/google`
+   - Production: `https://emailai.calldata.app/api/auth/callback/google`
 4. Add scopes:
    ```
    https://www.googleapis.com/auth/userinfo.profile
@@ -200,18 +221,40 @@ INTERNAL_API_KEY="your-internal-key"  # openssl rand -hex 32
 
 ## Architecture
 
+### calldata.app Domain Structure
+
 ```
-┌──────────────────┐
-│   EmailAI App    │  ← Main application (Next.js)
-│   (Port 3000)    │
-└────────┬─────────┘
+calldata.app (Marketing/Landing)
+│
+├─→ emailai.calldata.app          # EmailAI web application
+├─→ foundations.calldata.app      # Foundations web application
+├─→ [product].calldata.app        # Future products
+│
+├─→ api.calldata.app              # Unified API gateway
+│   ├─→ /v1/emailai/*             # EmailAI API endpoints
+│   └─→ /v1/foundations/*         # Foundations API endpoints
+│
+└─→ Shared Infrastructure
+    ├─→ ai.calldata.app           # Shared Ollama server (all products)
+    ├─→ auth.calldata.app         # Centralized SSO authentication
+    ├─→ docs.calldata.app         # Unified documentation
+    └─→ status.calldata.app       # Status page (all services)
+```
+
+### EmailAI Application Architecture
+
+```
+┌──────────────────────────┐
+│  emailai.calldata.app    │  ← EmailAI web app (Next.js)
+│  (Port 3000)             │
+└────────┬─────────────────┘
          │
          ├─→ PostgreSQL (Database)
          ├─→ Redis (Cache/Queue)
          ├─→ Google Gmail API
          └─→ AI Provider
               │
-              ├─→ Ollama Server (Local AI) ← Recommended
+              ├─→ ai.calldata.app (Shared Ollama) ← Recommended
               ├─→ OpenAI API
               ├─→ Anthropic API
               └─→ Groq API
@@ -227,7 +270,7 @@ User ──→ Organization ──→ Email Accounts (shared)
   │            ├─→ Categories (shared)
   │            └─→ Premium Subscription (seat-based)
   │
-  └─→ Fine-Tuned AI Model (personalized)
+  └─→ Fine-Tuned AI Model (personalized via ai.calldata.app)
 ```
 
 📖 [Architecture Details](./ARCHITECTURE.md)
