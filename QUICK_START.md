@@ -317,25 +317,80 @@ cd ../..
 npm run dev
 ```
 
-## Production Setup
+## Production Deployment
 
-For production deployment:
+EmailAI uses a modern production architecture with calldata.app domain structure:
 
-```bash
-# Run setup in production mode
-bash scripts/setup.sh --production
-
-# Or PowerShell
-.\scripts\setup.ps1 -Production
+```
+Production Stack:
+- Vercel: Web application (emailai.calldata.app)
+- Neon/Supabase: PostgreSQL database
+- Upstash: Redis cache
+- Vast.ai: Ollama AI server (ai.calldata.app)
+- Cloudflare: DNS and CDN
 ```
 
-This will:
-- Generate secure random passwords
-- Create `emailai_prod` database
-- Use `.env.production` instead of `.env.local`
-- Skip development-only features (Git hooks, seeding)
+### Automated Production Deployment
 
-**Important:** See [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md) for full production deployment instructions.
+Use our automated deployment scripts for one-command production setup:
+
+```bash
+# Step 1: Collect all configuration (interactive)
+bash scripts/deploy-config.sh
+
+# This will ask for:
+# - Domain configuration (calldata.app)
+# - Vercel account details
+# - Database credentials (Neon/Supabase/AWS RDS)
+# - Redis credentials (Upstash/ElastiCache)
+# - AI server setup (Vast.ai/Self-hosted/AWS EC2)
+# - Google OAuth credentials
+# - Optional services (Sentry, PostHog, etc.)
+
+# Step 2: Deploy everything automatically
+bash scripts/deploy.sh
+
+# Done! Access at https://emailai.calldata.app
+```
+
+**What the deployment scripts do:**
+- ✅ Provision cloud resources (if using AWS)
+- ✅ Run database migrations
+- ✅ Build and deploy to Vercel
+- ✅ Configure custom domains
+- ✅ Setup DNS records (Cloudflare/Route 53)
+- ✅ Upload environment variables
+- ✅ Verify deployment
+
+**Cost estimates:**
+- **Free tier**: $0-84/month (Vercel Free + Neon Free + Upstash Free + Vast.ai GPU)
+- **Production**: $300-500/month (Vercel Pro + paid database/Redis + 24/7 GPU)
+- **Enterprise**: $1000+/month (AWS-hosted everything)
+
+### Manual Production Deployment
+
+If you prefer manual deployment:
+
+**Vercel Deployment:**
+```bash
+# Install Vercel CLI
+npm install -g vercel
+
+# Deploy
+vercel --prod
+
+# Add custom domain
+vercel domains add emailai.calldata.app
+```
+
+**AWS Deployment:**
+See [docs/DEPLOYMENT_COMPARISON_AWS_VS_VERCEL.md](docs/DEPLOYMENT_COMPARISON_AWS_VS_VERCEL.md) for complete AWS deployment guide.
+
+**Important Docs:**
+- **Deployment Scripts**: See [scripts/README.md](scripts/README.md) for detailed script usage
+- **Domain Setup**: See [docs/DOMAIN_CONFIGURATION_GUIDE.md](docs/DOMAIN_CONFIGURATION_GUIDE.md) for DNS configuration
+- **Deployment Comparison**: See [docs/DEPLOYMENT_COMPARISON_AWS_VS_VERCEL.md](docs/DEPLOYMENT_COMPARISON_AWS_VS_VERCEL.md) for Vercel vs AWS comparison
+- **Domain Structure**: See [docs/DOMAIN_STRUCTURE.md](docs/DOMAIN_STRUCTURE.md) for calldata.app architecture
 
 ## Useful Commands
 
