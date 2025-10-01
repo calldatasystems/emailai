@@ -1,0 +1,42 @@
+[
+  {
+    "prompt": "Write a professional email thanking a colleague for their help on a recent project",
+    "expected": null
+  },
+  {
+    "prompt": "Write an email declining a meeting request politely due to scheduling conflicts",
+    "expected": null
+  },
+  {
+    "prompt": "Write a follow-up email to a client who hasn't responded in a week",
+    "expected": null
+  },
+  {
+    "prompt": "Write an email requesting a deadline extension for a project",
+    "expected": null
+  },
+  {
+    "prompt": "Write a brief email confirming receipt of documents and next steps",
+    "expected": null
+  },
+  {
+    "prompt": "Write an email introducing yourself to a new team member",
+    "expected": null
+  },
+  {
+    "prompt": "Write an email apologizing for a delayed response and providing the requested information",
+    "expected": null
+  },
+  {
+    "prompt": "Write an email asking for feedback on a proposal you submitted",
+    "expected": null
+  },
+  {
+    "prompt": "Write an email scheduling a team meeting to discuss quarterly goals",
+    "expected": null
+  },
+  {
+    "prompt": "Write an email congratulating a colleague on their promotion",
+    "expected": null
+  }
+]

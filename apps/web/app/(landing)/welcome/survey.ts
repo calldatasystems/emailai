@@ -37,7 +37,7 @@ export const survey = {
     {
       key: "goal",
       type: "single_choice",
-      question: "What are you looking to achieve with Inbox Zero?",
+      question: "What are you looking to achieve with EmailAI?",
       choices: [
         "Clean up my existing emails",
         "Manage my inbox better going forward",
@@ -59,7 +59,7 @@ export const survey = {
     {
       key: "source",
       type: "single_choice",
-      question: "How did you hear about Inbox Zero?",
+      question: "How did you hear about EmailAI?",
       choices: [
         "Search",
         "Friend",

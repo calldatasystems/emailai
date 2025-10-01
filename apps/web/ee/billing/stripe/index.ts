@@ -14,7 +14,7 @@ export const getStripe = () => {
       appInfo: {
         name: "Inbox Zero",
         version: "1.0.0",
-        url: "https://www.calldata.app",
+        url: "https://www.emailai.com",
       },
       typescript: true,
     });

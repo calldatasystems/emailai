@@ -156,7 +156,7 @@ const featuresColdEmailBlocker = [
   {
     name: "Adjust cold email prompt",
     description:
-      "Tell Inbox Zero what constitutes a cold email for you. It will block them based on your instructions.",
+      "Tell EmailAI what constitutes a cold email for you. It will block them based on your instructions.",
     icon: SparklesIcon,
   },
   {

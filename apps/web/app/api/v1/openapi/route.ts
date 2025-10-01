@@ -35,7 +35,7 @@ registry.registerPath({
       groupId: z
         .string()
         .describe(
-          "You can find the group id by going to `https://www.calldata.app/automation?tab=groups`, clicking `Matching Emails`, and then copying the id from the URL.",
+          "You can find the group id by going to `https://www.emailai.com/automation?tab=groups`, clicking `Matching Emails`, and then copying the id from the URL.",
         ),
     }),
     query: groupEmailsQuerySchema,
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
         ? [{ url: `${customHost}/api/v1`, description: "Custom host" }]
         : []),
       {
-        url: "https://calldata.app/api/v1",
+        url: "https://emailai.com/api/v1",
         description: "Production server",
       },
       { url: "http://localhost:3000/api/v1", description: "Local development" },

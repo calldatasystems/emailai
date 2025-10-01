@@ -6,15 +6,33 @@ export type GetEmailAccountsResponse = Awaited<
   ReturnType<typeof getEmailAccounts>
 >;
 
-async function getEmailAccounts({ userId }: { userId: string }) {
+async function getEmailAccounts({
+  userId,
+  organizationId,
+}: {
+  userId: string;
+  organizationId?: string;
+}) {
+  // Build where clause to include organization scope
+  const where = organizationId
+    ? {
+        // For org members: show all email accounts in the organization
+        organizationId,
+      }
+    : {
+        // Fallback: show user's personal accounts (backwards compatibility)
+        userId,
+      };
+
   const emailAccounts = await prisma.emailAccount.findMany({
-    where: { userId },
+    where,
     select: {
       id: true,
       email: true,
       accountId: true,
       name: true,
       image: true,
+      organizationId: true,
       user: {
         select: {
           name: true,
@@ -47,6 +65,7 @@ async function getEmailAccounts({ userId }: { userId: string }) {
 
 export const GET = withAuth(async (request) => {
   const userId = request.auth.userId;
-  const result = await getEmailAccounts({ userId });
+  const organizationId = request.auth.organizationId;
+  const result = await getEmailAccounts({ userId, organizationId });
   return NextResponse.json(result);
 });

@@ -22,7 +22,7 @@ const featuredTestimonial = {
 };
 
 const stevenTestimonial: Testimonial = {
-  body: "Love this new open-source app by @elie2222: calldata.app",
+  body: "Love this new open-source app: emailai.com",
   author: {
     name: "Steven Tey",
     handle: "steventey",
@@ -124,7 +124,7 @@ export function Testimonials() {
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-xl text-center">
           <h2 className="text-lg font-semibold leading-8 tracking-tight text-blue-600">
-            Inbox Zero Love
+            EmailAI Love
           </h2>
           <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
             Join thousands who spend less time on email

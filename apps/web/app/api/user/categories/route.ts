@@ -4,13 +4,20 @@ import { getUserCategories } from "@/utils/category.server";
 
 export type UserCategoriesResponse = Awaited<ReturnType<typeof getCategories>>;
 
-async function getCategories({ emailAccountId }: { emailAccountId: string }) {
-  const result = await getUserCategories({ emailAccountId });
+async function getCategories({
+  emailAccountId,
+  organizationId,
+}: {
+  emailAccountId: string;
+  organizationId?: string;
+}) {
+  const result = await getUserCategories({ emailAccountId, organizationId });
   return { result };
 }
 
 export const GET = withEmailAccount(async (request) => {
   const emailAccountId = request.auth.emailAccountId;
-  const result = await getCategories({ emailAccountId });
+  const organizationId = request.auth.organizationId;
+  const result = await getCategories({ emailAccountId, organizationId });
   return NextResponse.json(result);
 });

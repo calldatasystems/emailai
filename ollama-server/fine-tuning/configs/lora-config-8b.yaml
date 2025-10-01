@@ -1,0 +1,46 @@
+# LoRA Fine-Tuning Configuration for Llama 3.1 8B
+# Hardware: 24GB+ GPU VRAM (RTX 3090, RTX 4090, A6000)
+# Training time: ~2-4 hours for 100-200 emails
+
+# Model configuration
+base_model: "meta-llama/Llama-3.1-8B-Instruct"
+model_max_length: 2048
+
+# Data paths
+train_data: "training-data/train_alpaca.jsonl"
+val_data: "training-data/val_alpaca.jsonl"
+data_format: "alpaca"  # alpaca or chat
+
+# LoRA configuration
+lora_r: 16                # Rank (higher = more parameters, better quality)
+lora_alpha: 32            # Alpha scaling (typically 2x rank)
+lora_dropout: 0.05        # Dropout rate
+lora_target_modules: null # Use default (all attention layers)
+
+# Quantization (saves memory)
+use_4bit: true
+bnb_4bit_compute_dtype: "float16"
+bnb_4bit_quant_type: "nf4"
+
+# Training hyperparameters
+output_dir: "./output/llama-3.1-8b-email"
+num_train_epochs: 3
+per_device_train_batch_size: 4
+per_device_eval_batch_size: 4
+gradient_accumulation_steps: 4    # Effective batch size = 16
+learning_rate: 2.0e-4
+max_grad_norm: 0.3
+warmup_ratio: 0.03
+lr_scheduler_type: "cosine"
+
+# Logging and checkpointing
+logging_steps: 10
+save_steps: 100
+eval_steps: 100
+save_total_limit: 3       # Keep only 3 best checkpoints
+
+# Optimization
+fp16: false               # Use bf16 instead
+bf16: true                # BFloat16 for better stability
+gradient_checkpointing: true
+group_by_length: true     # Group similar-length samples

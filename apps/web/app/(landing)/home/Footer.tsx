@@ -13,10 +13,10 @@ const navigation = {
   ],
   support: [
     { name: "Pricing", href: "/#pricing" },
-    { name: "Contact", href: "mailto:elie@calldata.app", target: "_blank" },
+    { name: "Contact", href: "mailto:support@emailai.com", target: "_blank" },
     {
       name: "Documentation",
-      href: "https://docs.calldata.app",
+      href: "https://docs.emailai.com",
       target: "_blank",
     },
     { name: "Feature Requests", href: "/feature-requests", target: "_blank" },
@@ -115,7 +115,7 @@ export function Footer() {
           ))}
         </div>
         <p className="mt-10 text-center text-xs leading-5 text-gray-500">
-          &copy; {new Date().getFullYear()} Inbox Zero. All rights reserved.
+          &copy; {new Date().getFullYear()} EmailAI. All rights reserved.
         </p>
       </div>
     </footer>

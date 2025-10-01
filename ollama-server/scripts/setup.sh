@@ -1,0 +1,356 @@
+#!/bin/bash
+
+#######################################################################
+# Ollama Server Setup Script for EmailAI
+#
+# This script sets up an Ollama server to provide local AI inference
+# for EmailAI. It can be run on a separate machine from EmailAI.
+#
+# Supported Models:
+# - llama3.1 (8B) - Best for lightweight deployments (requires 8GB RAM)
+# - llama3.3 (70B) - Best quality (requires 48GB+ RAM)
+# - qwen2.5 (7B/14B/32B) - Good balance of quality and performance
+# - phi3 (3.8B) - Ultra lightweight (requires 4GB RAM)
+#
+# Usage:
+#   sudo bash setup.sh [dev|prod]
+#
+# Examples:
+#   sudo bash setup.sh dev    # Install Ollama + llama3.1:8b (lightweight)
+#   sudo bash setup.sh prod   # Install Ollama + llama3.3:70b (best quality)
+#######################################################################
+
+set -e  # Exit on error
+
+# Color output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Helper functions
+info() {
+    echo -e "${BLUE}ℹ️  $1${NC}"
+}
+
+success() {
+    echo -e "${GREEN}✅ $1${NC}"
+}
+
+warn() {
+    echo -e "${YELLOW}⚠️  $1${NC}"
+}
+
+error() {
+    echo -e "${RED}❌ $1${NC}"
+    exit 1
+}
+
+# Check if running as root
+if [ "$EUID" -ne 0 ]; then
+    error "Please run as root (use sudo)"
+fi
+
+# Parse arguments
+MODE="${1:-dev}"
+
+if [[ "$MODE" != "dev" && "$MODE" != "prod" ]]; then
+    error "Invalid mode. Use 'dev' or 'prod'"
+fi
+
+info "Starting Ollama setup in $MODE mode..."
+
+#######################################################################
+# Step 1: Check System Requirements
+#######################################################################
+
+info "Checking system requirements..."
+
+# Check OS
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    OS="linux"
+    success "OS: Linux"
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    OS="macos"
+    success "OS: macOS"
+else
+    error "Unsupported OS: $OSTYPE. This script supports Linux and macOS only."
+fi
+
+# Check available RAM
+TOTAL_RAM=$(free -g 2>/dev/null | awk '/^Mem:/{print $2}' || sysctl -n hw.memsize 2>/dev/null | awk '{print int($1/1024/1024/1024)}')
+
+if [ -z "$TOTAL_RAM" ]; then
+    warn "Could not detect RAM. Proceeding anyway..."
+else
+    info "Total RAM: ${TOTAL_RAM}GB"
+
+    if [[ "$MODE" == "prod" && "$TOTAL_RAM" -lt 48 ]]; then
+        warn "Production mode (Llama 3.3 70B) requires 48GB+ RAM. You have ${TOTAL_RAM}GB."
+        warn "Consider using development mode or upgrading your hardware."
+        read -p "Continue anyway? (y/n) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            exit 1
+        fi
+    elif [[ "$MODE" == "dev" && "$TOTAL_RAM" -lt 8 ]]; then
+        warn "Development mode (Llama 3.1 8B) requires 8GB+ RAM. You have ${TOTAL_RAM}GB."
+        warn "Consider using a smaller model like phi3 (4GB)."
+        read -p "Continue anyway? (y/n) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            exit 1
+        fi
+    fi
+fi
+
+# Check GPU
+if command -v nvidia-smi &> /dev/null; then
+    GPU_INFO=$(nvidia-smi --query-gpu=name,memory.total --format=csv,noheader | head -1)
+    success "NVIDIA GPU detected: $GPU_INFO"
+    USE_GPU=true
+else
+    info "No NVIDIA GPU detected. Will use CPU (slower)."
+    USE_GPU=false
+fi
+
+#######################################################################
+# Step 2: Install Ollama
+#######################################################################
+
+info "Installing Ollama..."
+
+if command -v ollama &> /dev/null; then
+    OLLAMA_VERSION=$(ollama --version 2>&1 | grep -oP 'version \K[0-9.]+' || echo "unknown")
+    success "Ollama already installed (version $OLLAMA_VERSION)"
+    read -p "Reinstall Ollama? (y/n) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        info "Reinstalling Ollama..."
+        curl -fsSL https://ollama.com/install.sh | sh
+    fi
+else
+    info "Downloading and installing Ollama..."
+    curl -fsSL https://ollama.com/install.sh | sh
+fi
+
+success "Ollama installed successfully"
+
+#######################################################################
+# Step 3: Start Ollama Service
+#######################################################################
+
+info "Starting Ollama service..."
+
+# Check if systemd is available
+if command -v systemctl &> /dev/null; then
+    systemctl enable ollama 2>/dev/null || true
+    systemctl start ollama 2>/dev/null || true
+
+    if systemctl is-active --quiet ollama; then
+        success "Ollama service is running"
+    else
+        warn "Could not start Ollama via systemd. Starting manually..."
+        ollama serve > /var/log/ollama.log 2>&1 &
+        sleep 3
+    fi
+else
+    warn "systemd not found. Starting Ollama manually..."
+    ollama serve > /var/log/ollama.log 2>&1 &
+    sleep 3
+fi
+
+# Verify Ollama is running
+if ! curl -s http://localhost:11434/api/tags > /dev/null; then
+    error "Ollama is not responding. Check logs at /var/log/ollama.log"
+fi
+
+success "Ollama is running on http://localhost:11434"
+
+#######################################################################
+# Step 4: Pull AI Models
+#######################################################################
+
+info "Downloading AI models..."
+
+if [[ "$MODE" == "prod" ]]; then
+    MODEL_NAME="llama3.3:70b"
+    MODEL_SIZE="~40GB"
+    info "Production mode: Pulling Llama 3.3 70B (this will take a while...)"
+    warn "This will download approximately $MODEL_SIZE of data"
+else
+    MODEL_NAME="llama3.1:8b"
+    MODEL_SIZE="~4.7GB"
+    info "Development mode: Pulling Llama 3.1 8B"
+    warn "This will download approximately $MODEL_SIZE of data"
+fi
+
+read -p "Continue with download? (y/n) " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    warn "Skipping model download. You can pull models later with: ollama pull $MODEL_NAME"
+else
+    info "Pulling $MODEL_NAME..."
+    ollama pull "$MODEL_NAME"
+    success "Model $MODEL_NAME downloaded successfully"
+fi
+
+#######################################################################
+# Step 5: Test the Model
+#######################################################################
+
+info "Testing the model..."
+
+TEST_RESPONSE=$(ollama run "$MODEL_NAME" "Say 'Hello from Ollama!' in one sentence" --verbose=false 2>&1 || echo "ERROR")
+
+if [[ "$TEST_RESPONSE" == *"ERROR"* ]] || [[ -z "$TEST_RESPONSE" ]]; then
+    error "Model test failed. Check logs with: journalctl -u ollama -n 50"
+else
+    success "Model test successful!"
+    info "Response: $TEST_RESPONSE"
+fi
+
+#######################################################################
+# Step 6: Configure Firewall (if needed)
+#######################################################################
+
+info "Checking firewall configuration..."
+
+# Check if ufw is installed and active
+if command -v ufw &> /dev/null && ufw status | grep -q "Status: active"; then
+    info "UFW firewall detected"
+    read -p "Allow Ollama port 11434 through firewall? (y/n) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        ufw allow 11434/tcp
+        success "Port 11434 opened in firewall"
+    fi
+fi
+
+# Check if firewalld is installed and running
+if command -v firewall-cmd &> /dev/null && systemctl is-active --quiet firewalld; then
+    info "firewalld detected"
+    read -p "Allow Ollama port 11434 through firewall? (y/n) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        firewall-cmd --permanent --add-port=11434/tcp
+        firewall-cmd --reload
+        success "Port 11434 opened in firewall"
+    fi
+fi
+
+#######################################################################
+# Step 7: Create Configuration File
+#######################################################################
+
+info "Creating configuration file..."
+
+CONFIG_FILE="/etc/ollama/config.env"
+mkdir -p "$(dirname "$CONFIG_FILE")"
+
+cat > "$CONFIG_FILE" << EOF
+# Ollama Configuration for EmailAI
+# Generated: $(date)
+
+# Model configuration
+OLLAMA_MODEL=$MODEL_NAME
+OLLAMA_MODE=$MODE
+
+# Server configuration
+OLLAMA_HOST=0.0.0.0:11434
+OLLAMA_ORIGINS=*
+
+# Performance tuning
+OLLAMA_NUM_PARALLEL=4
+OLLAMA_MAX_LOADED_MODELS=1
+
+# GPU configuration (if available)
+OLLAMA_GPU_LAYERS=${USE_GPU:+999}
+
+# Logging
+OLLAMA_DEBUG=false
+EOF
+
+success "Configuration saved to $CONFIG_FILE"
+
+#######################################################################
+# Step 8: Create Helper Scripts
+#######################################################################
+
+info "Creating helper scripts..."
+
+# Create status check script
+cat > /usr/local/bin/ollama-status << 'EOF'
+#!/bin/bash
+echo "=== Ollama Status ==="
+echo ""
+echo "Service Status:"
+systemctl status ollama --no-pager 2>/dev/null || echo "Not running as systemd service"
+echo ""
+echo "Loaded Models:"
+curl -s http://localhost:11434/api/tags | jq -r '.models[] | "\(.name) - \(.size/1024/1024/1024 | floor)GB"' 2>/dev/null || echo "Could not retrieve models"
+echo ""
+echo "Listening on:"
+ss -tlnp | grep 11434 || echo "Not listening"
+EOF
+chmod +x /usr/local/bin/ollama-status
+
+# Create test script
+cat > /usr/local/bin/ollama-test << 'EOF'
+#!/bin/bash
+MODEL="${1:-llama3.1:8b}"
+echo "Testing model: $MODEL"
+echo ""
+ollama run "$MODEL" "Respond with exactly 5 words: I am working correctly"
+EOF
+chmod +x /usr/local/bin/ollama-test
+
+success "Helper scripts created:"
+success "  - ollama-status (check service status)"
+success "  - ollama-test [model] (test a model)"
+
+#######################################################################
+# Step 9: Display Connection Information
+#######################################################################
+
+# Get server IP
+SERVER_IP=$(hostname -I | awk '{print $1}' || ip addr show | grep 'inet ' | grep -v '127.0.0.1' | awk '{print $2}' | cut -d/ -f1 | head -1)
+
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+success "Ollama Setup Complete!"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+info "Configuration Summary:"
+echo "  Mode: $MODE"
+echo "  Model: $MODEL_NAME"
+echo "  GPU: ${USE_GPU:-false}"
+echo ""
+info "Connection Details:"
+echo "  Local URL: http://localhost:11434"
+echo "  Network URL: http://${SERVER_IP}:11434"
+echo ""
+info "Add these to your EmailAI .env file:"
+echo ""
+echo "  OLLAMA_BASE_URL=http://${SERVER_IP}:11434/api"
+echo "  NEXT_PUBLIC_OLLAMA_MODEL=$MODEL_NAME"
+echo "  DEFAULT_LLM_PROVIDER=ollama"
+echo ""
+info "Useful Commands:"
+echo "  Check status: ollama-status"
+echo "  Test model: ollama-test $MODEL_NAME"
+echo "  List models: ollama list"
+echo "  Pull new model: ollama pull [model-name]"
+echo "  View logs: journalctl -u ollama -f"
+echo ""
+info "Next Steps:"
+echo "  1. Copy the environment variables above to your EmailAI .env file"
+echo "  2. Restart EmailAI application"
+echo "  3. Test the connection from EmailAI"
+echo ""
+warn "Security Note:"
+echo "  Ollama is now accessible on your network at http://${SERVER_IP}:11434"
+echo "  Consider setting up authentication or restricting access via firewall."
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

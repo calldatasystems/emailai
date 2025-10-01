@@ -12,22 +12,52 @@ export type CategoryWithRules = Prisma.CategoryGetPayload<{
 
 export const getUserCategories = async ({
   emailAccountId,
+  organizationId,
 }: {
   emailAccountId: string;
+  organizationId?: string;
 }) => {
+  // Build where clause to include organization scope
+  const where = organizationId
+    ? {
+        emailAccountId,
+        emailAccount: {
+          organizationId, // Ensure the email account belongs to the org
+        },
+      }
+    : {
+        // Fallback: just filter by email account (backwards compatibility)
+        emailAccountId,
+      };
+
   const categories = await prisma.category.findMany({
-    where: { emailAccountId },
+    where,
   });
   return categories;
 };
 
 export const getUserCategoriesWithRules = async ({
   emailAccountId,
+  organizationId,
 }: {
   emailAccountId: string;
+  organizationId?: string;
 }) => {
+  // Build where clause to include organization scope
+  const where = organizationId
+    ? {
+        emailAccountId,
+        emailAccount: {
+          organizationId, // Ensure the email account belongs to the org
+        },
+      }
+    : {
+        // Fallback: just filter by email account (backwards compatibility)
+        emailAccountId,
+      };
+
   const categories = await prisma.category.findMany({
-    where: { emailAccountId },
+    where,
     select: {
       id: true,
       name: true,

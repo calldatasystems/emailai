@@ -25,9 +25,9 @@ const calFont = localFont({
   display: "swap",
 });
 
-const title = "Inbox Zero | Automate and clean your inbox";
+const title = "EmailAI | Your AI Email Assistant";
 const description =
-  "Inbox Zero is your AI personal assistant for email and the quickest way to reach inbox zero. Automate your email, bulk unsubscribe from newsletters, block cold emails, and view your email analytics. Open-source.";
+  "EmailAI is your AI personal assistant for email. Automate your email, bulk unsubscribe from newsletters, block cold emails, and view your email analytics. Open-source.";
 
 export const metadata: Metadata = {
   title,
@@ -35,14 +35,14 @@ export const metadata: Metadata = {
   openGraph: {
     title,
     description,
-    siteName: "Inbox Zero",
+    siteName: "EmailAI",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
     title,
     description,
-    creator: "@emailai_ai",
+    creator: "@emailai",
   },
   metadataBase: new URL(env.NEXT_PUBLIC_BASE_URL),
   // issues with robots.txt: https://github.com/vercel/next.js/issues/58615#issuecomment-1852457285
@@ -51,11 +51,11 @@ export const metadata: Metadata = {
     follow: true,
   },
   // pwa
-  applicationName: "Inbox Zero",
+  applicationName: "EmailAI",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Inbox Zero",
+    title: "EmailAI",
     startupImage,
   },
   formatDetection: {
