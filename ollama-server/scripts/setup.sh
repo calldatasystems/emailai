@@ -62,6 +62,65 @@ fi
 info "Starting Ollama setup in $MODE mode..."
 
 #######################################################################
+# Step 0: Install Essential Dependencies
+#######################################################################
+
+info "Installing essential dependencies..."
+
+# Detect package manager
+if command -v apt-get &> /dev/null; then
+    PKG_MANAGER="apt-get"
+    UPDATE_CMD="apt-get update -qq"
+    INSTALL_CMD="apt-get install -y"
+elif command -v yum &> /dev/null; then
+    PKG_MANAGER="yum"
+    UPDATE_CMD="yum check-update || true"
+    INSTALL_CMD="yum install -y"
+elif command -v apk &> /dev/null; then
+    PKG_MANAGER="apk"
+    UPDATE_CMD="apk update"
+    INSTALL_CMD="apk add"
+else
+    warn "Could not detect package manager. Some dependencies may be missing."
+    PKG_MANAGER="unknown"
+fi
+
+# Install essential tools if package manager is available
+if [ "$PKG_MANAGER" != "unknown" ]; then
+    info "Using package manager: $PKG_MANAGER"
+
+    # Update package lists
+    $UPDATE_CMD 2>&1 | grep -v "^Get:" | grep -v "^Ign:" | grep -v "^Hit:" || true
+
+    # List of essential packages
+    ESSENTIAL_PACKAGES=(
+        "curl"
+        "wget"
+        "git"
+        "jq"
+        "screen"
+        "net-tools"  # netstat
+        "vim"        # vi/vim editor
+        "nano"       # alternative editor
+        "lsof"       # list open files
+        "ca-certificates"
+        "gnupg"
+    )
+
+    # Install each package if not already installed
+    for package in "${ESSENTIAL_PACKAGES[@]}"; do
+        if ! command -v $(echo $package | sed 's/-.*//') &> /dev/null; then
+            info "Installing $package..."
+            $INSTALL_CMD $package 2>&1 | grep -v "^Get:" | grep -v "^Selecting" || true
+        fi
+    done
+
+    success "Essential dependencies installed"
+else
+    warn "Skipping dependency installation (unknown package manager)"
+fi
+
+#######################################################################
 # Step 1: Check System Requirements
 #######################################################################
 
@@ -143,30 +202,85 @@ success "Ollama installed successfully"
 
 info "Starting Ollama service..."
 
+# Detect if running in a container (Vast.ai, Docker, etc.)
+RUNNING_IN_CONTAINER=false
+if [ -f /.dockerenv ] || [ -f /run/.containerenv ] || grep -q 'docker\|lxc\|kubepods' /proc/1/cgroup 2>/dev/null; then
+    RUNNING_IN_CONTAINER=true
+    info "Container environment detected (Docker/Vast.ai)"
+fi
+
 # Check if systemd is available
-if command -v systemctl &> /dev/null; then
+if command -v systemctl &> /dev/null && [ "$RUNNING_IN_CONTAINER" = false ]; then
+    info "Using systemd to manage Ollama service..."
     systemctl enable ollama 2>/dev/null || true
     systemctl start ollama 2>/dev/null || true
 
     if systemctl is-active --quiet ollama; then
-        success "Ollama service is running"
+        success "Ollama service is running via systemd"
     else
         warn "Could not start Ollama via systemd. Starting manually..."
         ollama serve > /var/log/ollama.log 2>&1 &
         sleep 3
     fi
 else
-    warn "systemd not found. Starting Ollama manually..."
-    ollama serve > /var/log/ollama.log 2>&1 &
-    sleep 3
+    # Container or no systemd - use screen or nohup
+    info "No systemd available - using alternative process management..."
+
+    # Check if screen is available
+    if command -v screen &> /dev/null; then
+        info "Using screen to manage Ollama process..."
+
+        # Kill existing screen session if it exists
+        screen -S ollama -X quit 2>/dev/null || true
+
+        # Start Ollama in screen session with proper host binding
+        screen -dmS ollama bash -c 'OLLAMA_HOST=0.0.0.0:11434 ollama serve'
+        sleep 5
+
+        success "Ollama started in screen session 'ollama'"
+        info "Reattach with: screen -r ollama (Ctrl+A then D to detach)"
+    else
+        # Install screen if not available
+        info "Installing screen for process management..."
+        if command -v apt-get &> /dev/null; then
+            apt-get update -qq && apt-get install -y screen
+        elif command -v yum &> /dev/null; then
+            yum install -y screen
+        else
+            warn "Could not install screen. Using nohup instead..."
+            OLLAMA_HOST=0.0.0.0:11434 nohup ollama serve > /var/log/ollama.log 2>&1 &
+            sleep 5
+            success "Ollama started with nohup (logs at /var/log/ollama.log)"
+        fi
+
+        # Try again with screen if we just installed it
+        if command -v screen &> /dev/null; then
+            screen -dmS ollama bash -c 'OLLAMA_HOST=0.0.0.0:11434 ollama serve'
+            sleep 5
+            success "Ollama started in screen session 'ollama'"
+        fi
+    fi
 fi
 
 # Verify Ollama is running
-if ! curl -s http://localhost:11434/api/tags > /dev/null; then
-    error "Ollama is not responding. Check logs at /var/log/ollama.log"
-fi
+info "Verifying Ollama is responding..."
+RETRY_COUNT=0
+MAX_RETRIES=10
 
-success "Ollama is running on http://localhost:11434"
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+    if curl -s http://localhost:11434/api/tags > /dev/null 2>&1; then
+        success "Ollama is running on http://localhost:11434"
+        break
+    else
+        RETRY_COUNT=$((RETRY_COUNT + 1))
+        if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+            info "Waiting for Ollama to start... ($RETRY_COUNT/$MAX_RETRIES)"
+            sleep 2
+        else
+            error "Ollama is not responding after $MAX_RETRIES attempts. Check logs at /var/log/ollama.log or use: screen -r ollama"
+        fi
+    fi
+done
 
 #######################################################################
 # Step 4: Pull AI Models
@@ -286,13 +400,26 @@ cat > /usr/local/bin/ollama-status << 'EOF'
 echo "=== Ollama Status ==="
 echo ""
 echo "Service Status:"
-systemctl status ollama --no-pager 2>/dev/null || echo "Not running as systemd service"
+if command -v systemctl &> /dev/null && systemctl is-active --quiet ollama 2>/dev/null; then
+    systemctl status ollama --no-pager 2>/dev/null
+elif screen -ls | grep -q ollama; then
+    echo "✓ Running in screen session 'ollama'"
+    echo "  Reattach with: screen -r ollama"
+else
+    ps aux | grep "ollama serve" | grep -v grep > /dev/null && echo "✓ Running as background process" || echo "✗ Not running"
+fi
 echo ""
 echo "Loaded Models:"
-curl -s http://localhost:11434/api/tags | jq -r '.models[] | "\(.name) - \(.size/1024/1024/1024 | floor)GB"' 2>/dev/null || echo "Could not retrieve models"
+curl -s http://localhost:11434/api/tags | jq -r '.models[] | "\(.name) - \(.size/1024/1024/1024 | floor)GB"' 2>/dev/null || echo "Could not retrieve models (is Ollama running?)"
 echo ""
 echo "Listening on:"
-ss -tlnp | grep 11434 || echo "Not listening"
+if command -v ss &> /dev/null; then
+    ss -tlnp | grep 11434 || echo "Not listening"
+elif command -v netstat &> /dev/null; then
+    netstat -tlnp | grep 11434 || echo "Not listening"
+else
+    lsof -i :11434 2>/dev/null || echo "Could not check (ss/netstat/lsof not available)"
+fi
 EOF
 chmod +x /usr/local/bin/ollama-status
 
@@ -342,12 +469,28 @@ echo "  Check status: ollama-status"
 echo "  Test model: ollama-test $MODEL_NAME"
 echo "  List models: ollama list"
 echo "  Pull new model: ollama pull [model-name]"
-echo "  View logs: journalctl -u ollama -f"
+
+if [ "$RUNNING_IN_CONTAINER" = true ]; then
+    echo "  Reattach to Ollama: screen -r ollama"
+    echo "  View logs: screen -r ollama (Ctrl+A then D to detach)"
+else
+    echo "  View logs: journalctl -u ollama -f"
+fi
+
 echo ""
 info "Next Steps:"
 echo "  1. Copy the environment variables above to your EmailAI .env file"
 echo "  2. Restart EmailAI application"
 echo "  3. Test the connection from EmailAI"
+
+if [ "$RUNNING_IN_CONTAINER" = true ]; then
+    echo ""
+    warn "Container Environment Notes:"
+    echo "  - Ollama is running in screen session 'ollama'"
+    echo "  - If you exit SSH, the process will continue running"
+    echo "  - To stop Ollama: screen -r ollama, then Ctrl+C"
+    echo "  - To restart: screen -dmS ollama bash -c 'OLLAMA_HOST=0.0.0.0:11434 ollama serve'"
+fi
 echo ""
 warn "Security Note:"
 echo "  Ollama is now accessible on your network at http://${SERVER_IP}:11434"
