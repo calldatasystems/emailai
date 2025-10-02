@@ -305,7 +305,7 @@ if [ "$AI_PROVIDER" = "aws_ec2" ] && [ "$AI_CREATE_NEW" = "true" ]; then
     echo ""
     warning "Manual Ollama setup required on EC2 instance:"
     echo "  1. SSH to instance: ssh -i ${EC2_KEY_NAME}.pem ubuntu@${EC2_IP}"
-    echo "  2. Clone repo: git clone https://github.com/your-org/emailai.git"
+    echo "  2. Clone repo: git clone https://github.com/calldatasystems/emailai.git"
     echo "  3. Setup Ollama: cd emailai/ollama-server/scripts && sudo bash setup.sh prod"
     echo ""
 

@@ -79,7 +79,7 @@ apt-get update && apt-get install -y git
 
 # Clone the repo
 cd /root
-git clone https://github.com/your-org/emailai.git
+git clone https://github.com/calldatasystems/emailai.git
 cd emailai/ollama-server/scripts
 ```
 
@@ -412,7 +412,7 @@ If your instance is terminated:
 # 3. Run quick setup:
 
 cd /root
-git clone https://github.com/your-org/emailai.git
+git clone https://github.com/calldatasystems/emailai.git
 cd emailai/ollama-server/scripts
 sudo bash setup.sh prod
 
@@ -452,7 +452,7 @@ EmailAI will automatically:
 - **Vast.ai Support**: https://vast.ai/faq
 - **Vast.ai Discord**: https://discord.gg/vast-ai
 - **Ollama Docs**: https://github.com/ollama/ollama
-- **EmailAI Issues**: https://github.com/your-org/emailai/issues
+- **EmailAI Issues**: https://github.com/calldatasystems/emailai/issues
 
 ---
 
@@ -463,7 +463,7 @@ EmailAI will automatically:
 ssh root@ssh5.vast.ai -p <port>
 
 # Clone and setup
-git clone https://github.com/your-org/emailai.git
+git clone https://github.com/calldatasystems/emailai.git
 cd emailai/ollama-server/scripts
 sudo bash setup.sh prod
 

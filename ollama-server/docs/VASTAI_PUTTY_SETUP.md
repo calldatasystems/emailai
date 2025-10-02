@@ -484,7 +484,7 @@ curl -fsSL https://raw.githubusercontent.com/anthropics/claude-code/main/install
 claude
 
 # Clone EmailAI
-git clone https://github.com/your-org/emailai.git
+git clone https://github.com/calldatasystems/emailai.git
 cd emailai
 
 # Setup Ollama

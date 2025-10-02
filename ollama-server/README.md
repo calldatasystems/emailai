@@ -52,7 +52,7 @@ Vast.ai provides affordable GPU rentals (~70% cheaper than AWS):
 1. Create Vast.ai account at https://vast.ai/
 2. Rent instance with GPU (RTX 4090 recommended for Llama 3.3 70B)
 3. SSH to instance
-4. Clone this repo: `git clone https://github.com/your-org/emailai.git`
+4. Clone this repo: `git clone https://github.com/calldatasystems/emailai.git`
 5. Run setup: `cd emailai/ollama-server/scripts && sudo bash setup.sh prod`
 
 The setup script automatically installs:
@@ -200,7 +200,7 @@ cd ollama-server/scripts
 # 1. SSH to your Vast.ai instance
 # 2. Then run:
 cd /root
-git clone https://github.com/your-org/emailai.git
+git clone https://github.com/calldatasystems/emailai.git
 cd emailai/ollama-server/scripts
 sudo bash setup.sh prod
 

@@ -338,7 +338,7 @@ bash scripts/deploy.sh
 1. **Setup AI server** (if Vast.ai or EC2):
    ```bash
    ssh root@INSTANCE_IP
-   git clone https://github.com/your-org/emailai.git
+   git clone https://github.com/calldatasystems/emailai.git
    cd emailai/ollama-server/scripts
    sudo bash setup.sh prod
    ```

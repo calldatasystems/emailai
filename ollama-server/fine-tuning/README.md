@@ -238,7 +238,7 @@ DEFAULT_LLM_PROVIDER=ollama
 ssh root@ssh5.vast.ai -p 12345
 
 # 3. Clone repo and install
-git clone https://github.com/your-org/emailai.git
+git clone https://github.com/calldatasystems/emailai.git
 cd emailai/ollama-server/fine-tuning
 pip install -r configs/requirements.txt
 

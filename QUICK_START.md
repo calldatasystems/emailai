@@ -8,7 +8,7 @@ Get EmailAI running in under 5 minutes with our lazy setup script!
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/emailai.git
+git clone https://github.com/calldatasystems/emailai.git
 cd emailai
 
 # Run the setup script (installs everything automatically)
@@ -19,7 +19,7 @@ bash scripts/setup.sh
 
 ```powershell
 # Clone the repository
-git clone https://github.com/your-org/emailai.git
+git clone https://github.com/calldatasystems/emailai.git
 cd emailai
 
 # Run the setup script
@@ -454,7 +454,7 @@ emailai/
 
 ## Getting Help
 
-- **GitHub Issues**: https://github.com/your-org/emailai/issues
+- **GitHub Issues**: https://github.com/calldatasystems/emailai/issues
 - **Documentation**: https://docs.emailai.com
 - **Community**: https://community.emailai.com
 - **Email Support**: support@emailai.com
