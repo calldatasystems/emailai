@@ -121,6 +121,66 @@ else
 fi
 
 #######################################################################
+# Step 0b: Install Node.js and Claude Code
+#######################################################################
+
+info "Installing Node.js and Claude Code..."
+
+# Check if Node.js is already installed
+if command -v node &> /dev/null; then
+    NODE_VERSION=$(node --version | sed 's/v//')
+    NODE_MAJOR=$(echo $NODE_VERSION | cut -d. -f1)
+
+    if [ "$NODE_MAJOR" -ge 18 ]; then
+        success "Node.js $NODE_VERSION already installed"
+    else
+        warn "Node.js version too old ($NODE_VERSION). Installing Node.js 18..."
+        if [ "$PKG_MANAGER" = "apt-get" ]; then
+            curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+            apt-get install -y nodejs
+        elif [ "$PKG_MANAGER" = "yum" ]; then
+            curl -fsSL https://rpm.nodesource.com/setup_18.x | bash -
+            yum install -y nodejs
+        fi
+    fi
+else
+    info "Installing Node.js 18..."
+    if [ "$PKG_MANAGER" = "apt-get" ]; then
+        curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+        apt-get install -y nodejs
+    elif [ "$PKG_MANAGER" = "yum" ]; then
+        curl -fsSL https://rpm.nodesource.com/setup_18.x | bash -
+        yum install -y nodejs
+    elif [ "$PKG_MANAGER" = "apk" ]; then
+        apk add nodejs npm
+    else
+        warn "Could not install Node.js automatically. Please install manually."
+    fi
+
+    if command -v node &> /dev/null; then
+        success "Node.js $(node --version) installed"
+    else
+        warn "Node.js installation may have failed"
+    fi
+fi
+
+# Install Claude Code globally
+if command -v claude &> /dev/null; then
+    CLAUDE_VERSION=$(claude --version 2>&1 | head -1 || echo "unknown")
+    success "Claude Code already installed ($CLAUDE_VERSION)"
+else
+    info "Installing Claude Code..."
+    npm install -g @anthropic-ai/claude-code 2>&1 | grep -v "^npm WARN" || true
+
+    if command -v claude &> /dev/null; then
+        success "Claude Code installed successfully"
+        info "Start with: claude"
+    else
+        warn "Claude Code installation may have failed. Try manually: npm install -g @anthropic-ai/claude-code"
+    fi
+fi
+
+#######################################################################
 # Step 1: Check System Requirements
 #######################################################################
 
@@ -478,10 +538,22 @@ else
 fi
 
 echo ""
+info "Claude Code (AI Assistant):"
+if command -v claude &> /dev/null; then
+    echo "  ✓ Claude Code is installed"
+    echo "  Start with: claude"
+    echo "  Or in screen: screen -S claude && claude"
+else
+    echo "  ✗ Claude Code not installed (optional)"
+    echo "  Install manually: npm install -g @anthropic-ai/claude-code"
+fi
+
+echo ""
 info "Next Steps:"
 echo "  1. Copy the environment variables above to your EmailAI .env file"
 echo "  2. Restart EmailAI application"
 echo "  3. Test the connection from EmailAI"
+echo "  4. (Optional) Start Claude Code for interactive assistance: claude"
 
 if [ "$RUNNING_IN_CONTAINER" = true ]; then
     echo ""
