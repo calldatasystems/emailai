@@ -55,6 +55,13 @@ Vast.ai provides affordable GPU rentals (~70% cheaper than AWS):
 4. Clone this repo: `git clone https://github.com/your-org/emailai.git`
 5. Run setup: `cd emailai/ollama-server/scripts && sudo bash setup.sh prod`
 
+The setup script automatically installs:
+- ✅ All system dependencies (curl, git, vim, netstat, screen)
+- ✅ Node.js 18+
+- ✅ Claude Code (for interactive AI assistance)
+- ✅ Ollama with selected model
+- ✅ Helper scripts for management
+
 📖 **[Full Vast.ai Deployment Guide](./docs/VASTAI_DEPLOYMENT.md)**
 
 **Costs**:
