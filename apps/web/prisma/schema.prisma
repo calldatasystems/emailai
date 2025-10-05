@@ -82,6 +82,12 @@ model User {
   createdGroups     Group[]     @relation("GroupCreator")
   createdKnowledge  Knowledge[] @relation("KnowledgeCreator")
   createdCategories Category[]  @relation("CategoryCreator")
+
+  // AI Fine-tuning
+  fineTuningJobs    FineTuningJob[]
+
+  // Auto-send guardrails
+  autoSendGuardrails AutoSendGuardrail[]
 }
 
 // Multi-tenant organization model
@@ -104,6 +110,13 @@ model Organization {
   // Billing (organization-level premium)
   premiumId String?
   premium   Premium? @relation(fields: [premiumId], references: [id])
+
+  // Shared resources
+  rules              Rule[]
+  groups             Group[]
+  knowledge          Knowledge[]
+  categories         Category[]
+  autoSendGuardrails AutoSendGuardrail[]
 
   @@index([slug])
 }
@@ -765,4 +778,144 @@ enum SystemType {
   RECEIPT
   NOTIFICATION
   // COLD_EMAIL // handled separately. we may unify in the future
+}
+
+// AI Model Fine-Tuning Jobs
+model FineTuningJob {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // User this model is for
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Job status
+  status         FineTuningStatus @default(PENDING)
+  progress       Int              @default(0) // 0-100
+  currentStep    String? // e.g., "extracting_data", "training", "deploying"
+  errorMessage   String?          @db.Text
+
+  // Training configuration
+  baseModel      String  @default("llama3.1:8b") // Base model to fine-tune
+  trainingEmails Int?    // Number of emails used for training
+  epochs         Int     @default(3)
+
+  // Results
+  modelName      String? // e.g., "emailai-user123"
+  checkpointPath String? // Path to model checkpoint
+  deployedAt     DateTime?
+
+  // Job execution details
+  executorId     String? // e.g., Vast.ai instance ID
+  executorUrl    String? // e.g., SSH URL for monitoring
+  costEstimate   Float?  // Estimated cost in USD
+  actualCost     Float?  // Actual cost after completion
+
+  // Metadata
+  metadata       Json?   // Additional job-specific data
+
+  @@index([userId])
+  @@index([status])
+}
+
+enum FineTuningStatus {
+  PENDING           // Job created, waiting to start
+  EXTRACTING_DATA   // Extracting emails from database
+  PREPARING_DATA    // Converting to training format
+  PROVISIONING_GPU  // Renting GPU instance (Vast.ai)
+  TRAINING          // Model training in progress
+  EVALUATING        // Testing model quality
+  DEPLOYING         // Deploying to Ollama
+  COMPLETED         // Successfully deployed
+  FAILED            // Job failed
+  CANCELLED         // User cancelled
+}
+
+// Auto-Send Guardrails
+model AutoSendGuardrail {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Ownership
+  userId         String?
+  user           User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // Guardrail definition (natural language)
+  name        String // e.g., "Date commitment check"
+  description String @db.Text // Natural language: "Do not auto-send if recipient is asking for a time or date commitment"
+
+  // Configuration
+  enabled     Boolean @default(true)
+  priority    Int     @default(0) // Higher priority = checked first
+  severity    GuardrailSeverity @default(BLOCK) // BLOCK, WARN, or INFO
+
+  // Action when triggered
+  action      GuardrailAction @default(HOLD_FOR_REVIEW)
+
+  // Optional: Specific conditions
+  appliesTo   GuardrailScope  @default(ALL) // ALL, EXTERNAL_ONLY, INTERNAL_ONLY
+
+  // Examples for AI to learn from
+  examples    Json? // Array of example emails that should trigger this
+
+  // Statistics
+  triggeredCount Int @default(0)
+  lastTriggered  DateTime?
+
+  // Audit trail
+  violations AutoSendViolation[]
+
+  @@index([userId])
+  @@index([organizationId])
+  @@index([enabled])
+}
+
+// Track when guardrails are triggered
+model AutoSendViolation {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  guardrailId String
+  guardrail   AutoSendGuardrail @relation(fields: [guardrailId], references: [id], onDelete: Cascade)
+
+  // Email that triggered the guardrail
+  threadId     String
+  messageId    String?
+  emailSubject String?
+  emailPreview String? @db.Text
+
+  // AI reasoning
+  aiReasoning  String  @db.Text
+  confidence   Float   // 0-1, how confident AI is that this violates the guardrail
+
+  // User action
+  userOverride Boolean @default(false) // User sent anyway
+  overrideAt   DateTime?
+
+  @@index([guardrailId])
+  @@index([threadId])
+}
+
+enum GuardrailSeverity {
+  INFO    // Just log it, still auto-send
+  WARN    // Show warning but allow send
+  BLOCK   // Block auto-send, require review
+}
+
+enum GuardrailAction {
+  HOLD_FOR_REVIEW  // Save as draft, notify user
+  ASK_USER         // Prompt user to confirm
+  LOG_ONLY         // Just log, still send
+  ESCALATE         // Notify admin/supervisor
+}
+
+enum GuardrailScope {
+  ALL              // Apply to all emails
+  EXTERNAL_ONLY    // Only external recipients
+  INTERNAL_ONLY    // Only internal recipients (same domain)
+  SPECIFIC_DOMAINS // Specific domains (stored in examples)
 }

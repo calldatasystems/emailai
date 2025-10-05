@@ -272,14 +272,25 @@ fi
 # Check if systemd is available
 if command -v systemctl &> /dev/null && [ "$RUNNING_IN_CONTAINER" = false ]; then
     info "Using systemd to manage Ollama service..."
+
+    # Configure systemd service to bind to 0.0.0.0
+    mkdir -p /etc/systemd/system/ollama.service.d
+    cat > /etc/systemd/system/ollama.service.d/override.conf << EOF
+[Service]
+Environment="OLLAMA_HOST=0.0.0.0:11434"
+EOF
+
+    # Reload systemd and restart service
+    systemctl daemon-reload
     systemctl enable ollama 2>/dev/null || true
-    systemctl start ollama 2>/dev/null || true
+    systemctl restart ollama 2>/dev/null || true
+    sleep 3
 
     if systemctl is-active --quiet ollama; then
-        success "Ollama service is running via systemd"
+        success "Ollama service is running via systemd (bound to 0.0.0.0:11434)"
     else
         warn "Could not start Ollama via systemd. Starting manually..."
-        ollama serve > /var/log/ollama.log 2>&1 &
+        OLLAMA_HOST=0.0.0.0:11434 ollama serve > /var/log/ollama.log 2>&1 &
         sleep 3
     fi
 else
@@ -341,6 +352,47 @@ while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
         fi
     fi
 done
+
+# Verify IPv4 binding
+info "Verifying IPv4 binding..."
+if command -v netstat &> /dev/null; then
+    IPV4_BINDING=$(netstat -tlnp 2>/dev/null | grep 11434 | grep -E '0.0.0.0|127.0.0.1')
+    IPV6_ONLY=$(netstat -tlnp 2>/dev/null | grep 11434 | grep ':::' | grep -v '0.0.0.0')
+elif command -v ss &> /dev/null; then
+    IPV4_BINDING=$(ss -tlnp 2>/dev/null | grep 11434 | grep -E '0.0.0.0|127.0.0.1')
+    IPV6_ONLY=$(ss -tlnp 2>/dev/null | grep 11434 | grep '::' | grep -v '0.0.0.0')
+else
+    warn "Cannot verify binding (netstat/ss not available)"
+    IPV4_BINDING="unknown"
+fi
+
+if [ -n "$IPV4_BINDING" ] && echo "$IPV4_BINDING" | grep -q '0.0.0.0'; then
+    success "Ollama is bound to IPv4 (0.0.0.0:11434) - accessible remotely"
+elif [ -n "$IPV6_ONLY" ] && [ -z "$IPV4_BINDING" ]; then
+    error "Ollama is only bound to IPv6 (:::11434). This may not be accessible remotely. Restarting with correct binding..."
+
+    # Kill and restart with correct binding
+    pkill ollama
+    sleep 2
+
+    if [ "$RUNNING_IN_CONTAINER" = true ]; then
+        screen -S ollama -X quit 2>/dev/null || true
+        screen -dmS ollama bash -c 'OLLAMA_HOST=0.0.0.0:11434 ollama serve'
+        sleep 5
+    else
+        systemctl restart ollama
+        sleep 3
+    fi
+
+    # Check again
+    if netstat -tlnp 2>/dev/null | grep 11434 | grep -q '0.0.0.0' || ss -tlnp 2>/dev/null | grep 11434 | grep -q '0.0.0.0'; then
+        success "Ollama now bound to IPv4 (0.0.0.0:11434)"
+    else
+        warn "Still having issues with IPv4 binding. Check: netstat -tlnp | grep 11434"
+    fi
+else
+    info "Ollama binding: $IPV4_BINDING"
+fi
 
 #######################################################################
 # Step 4: Pull AI Models

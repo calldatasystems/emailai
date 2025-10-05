@@ -11,7 +11,9 @@
       "Bash(for:*)",
       "Bash(do sed -i 's|github.com/your-org/emailai|github.com/aqorn/emailai|g' \"$file\")",
       "Bash(done)",
-      "Bash(do sed -i 's|github.com/aqorn/emailai|github.com/calldatasystems/emailai|g' \"$file\")"
+      "Bash(do sed -i 's|github.com/aqorn/emailai|github.com/calldatasystems/emailai|g' \"$file\")",
+      "Bash(bash:*)",
+      "Bash(dos2unix:*)"
     ],
     "deny": [],
     "ask": []

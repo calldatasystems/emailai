@@ -6,6 +6,11 @@ import { ExecutedRuleStatus, ActionType } from "@prisma/client";
 import { createScopedLogger } from "@/utils/logger";
 import type { ParsedMessage } from "@/utils/types";
 import { updateExecutedActionWithDraftId } from "@/utils/ai/choose-rule/draft-management";
+import {
+  checkGuardrailsBeforeSend,
+  convertToDraftIfBlocked,
+} from "@/utils/ai/guardrails/check-before-send";
+import type { EmailAccountWithAI } from "@/utils/llms/types";
 
 type ExecutedRuleWithActionItems = Prisma.ExecutedRuleGetPayload<{
   include: { actionItems: true };
@@ -26,6 +31,7 @@ export async function executeAct({
   userId,
   emailAccountId,
   message,
+  emailAccount,
 }: {
   gmail: gmail_v1.Gmail;
   executedRule: ExecutedRuleWithActionItems;
@@ -33,6 +39,7 @@ export async function executeAct({
   userEmail: string;
   userId: string;
   emailAccountId: string;
+  emailAccount?: EmailAccountWithAI;
 }) {
   const logger = createScopedLogger("ai-execute-act").with({
     email: userEmail,
@@ -54,6 +61,67 @@ export async function executeAct({
 
   for (const action of executedRule.actionItems) {
     try {
+      // Check guardrails before sending/replying
+      if (
+        emailAccount &&
+        (action.type === ActionType.REPLY || action.type === ActionType.SEND_EMAIL)
+      ) {
+        const user = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { organizationId: true },
+        });
+
+        const checkResult = await checkGuardrailsBeforeSend({
+          userId,
+          organizationId: user?.organizationId || null,
+          emailAccount,
+          email: message,
+          draftContent: (action as any).content || "",
+          actionType: action.type,
+        });
+
+        if (!checkResult.canSend) {
+          logger.info("Email blocked by guardrails", {
+            blockedBy: checkResult.blockedBy.map((b) => b.guardrail.name),
+          });
+
+          // Convert to draft instead of sending
+          const draftAction = {
+            ...action,
+            type: ActionType.DRAFT_EMAIL,
+          };
+
+          const actionResult = await runActionFunction({
+            gmail,
+            email: message,
+            action: draftAction,
+            userEmail,
+            userId,
+            emailAccountId,
+            executedRule,
+          });
+
+          if (actionResult?.draftId) {
+            await updateExecutedActionWithDraftId({
+              actionId: action.id,
+              draftId: actionResult.draftId,
+              logger,
+            });
+          }
+
+          // Mark execution as held for review
+          await convertToDraftIfBlocked(checkResult, executedRule.id);
+
+          continue;
+        }
+
+        if (checkResult.warnings.length > 0) {
+          logger.warn("Email has guardrail warnings", {
+            warnings: checkResult.warnings.map((w) => w.guardrail.name),
+          });
+        }
+      }
+
       const actionResult = await runActionFunction({
         gmail,
         email: message,

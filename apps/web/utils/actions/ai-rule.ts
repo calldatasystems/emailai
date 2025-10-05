@@ -223,6 +223,7 @@ export const approvePlanAction = actionClient
         userEmail: emailAccount.email,
         userId: emailAccount.userId,
         emailAccountId,
+        emailAccount,
       });
     },
   );
