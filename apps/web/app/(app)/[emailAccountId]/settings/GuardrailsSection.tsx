@@ -412,7 +412,7 @@ export function GuardrailsSection() {
                     <TableCell>
                       <Switch
                         checked={guardrail.enabled}
-                        onCheckedChange={(enabled) =>
+                        onCheckedChange={(enabled: boolean) =>
                           handleToggle(guardrail.id, enabled)
                         }
                       />
