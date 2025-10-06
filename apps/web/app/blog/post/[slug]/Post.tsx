@@ -15,7 +15,7 @@ import { Prose } from "@/app/blog/components/Prose";
 import { TableOfContents } from "@/app/blog/components/TableOfContents";
 import { Card, CardContent } from "@/components/ui/card";
 import { extractTextFromPortableTextBlock, slugify } from "@/utils/text";
-import { Tryemailai } from "@/app/blog/components/Tryemailai";
+import { Tryemailai } from "@/app/blog/components/TryInboxZero";
 import { ReadMore } from "@/app/blog/components/ReadMore";
 
 const builder = imageUrlBuilder(client);
