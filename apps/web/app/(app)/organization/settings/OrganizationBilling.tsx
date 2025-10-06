@@ -82,7 +82,7 @@ export function OrganizationBilling() {
                 <div className="mt-2 flex items-center gap-2">
                   {data.hasPremium && data.tier ? (
                     <>
-                      <Badge className="text-base">
+                      <Badge color="blue" className="text-base">
                         {capitalCase(data.tier)}
                       </Badge>
                       {data.subscription.status && (
