@@ -130,24 +130,24 @@ export function OrganizationBilling() {
                       </Button>
                     )}
                     {data.subscription.provider === "lemon" && (
-                      <Button asChild>
-                        <Link
-                          href={`https://${env.NEXT_PUBLIC_LEMON_STORE_ID}.lemonsqueezy.com/billing`}
-                          target="_blank"
-                        >
+                      <Link
+                        href={`https://${env.NEXT_PUBLIC_LEMON_STORE_ID}.lemonsqueezy.com/billing`}
+                        target="_blank"
+                      >
+                        <Button>
                           <CreditCardIcon className="mr-2 h-4 w-4" />
                           Manage Subscription
-                        </Link>
-                      </Button>
+                        </Button>
+                      </Link>
                     )}
                   </>
                 ) : (
-                  <Button variant="primaryBlue" asChild>
-                    <Link href="/premium">
+                  <Link href="/premium">
+                    <Button variant="primaryBlue">
                       <TrendingUp className="mr-2 h-4 w-4" />
                       Upgrade to Premium
-                    </Link>
-                  </Button>
+                    </Button>
+                  </Link>
                 )}
               </div>
             </div>
