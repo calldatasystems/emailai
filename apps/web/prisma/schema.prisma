@@ -112,10 +112,6 @@ model Organization {
   premium   Premium? @relation(fields: [premiumId], references: [id])
 
   // Shared resources
-  rules              Rule[]
-  groups             Group[]
-  knowledge          Knowledge[]
-  categories         Category[]
   autoSendGuardrails AutoSendGuardrail[]
 
   @@index([slug])

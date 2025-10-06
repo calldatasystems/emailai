@@ -92,7 +92,7 @@ export function OrganizationBilling() {
                       )}
                     </>
                   ) : (
-                    <Badge variant="outline">Free Plan</Badge>
+                    <Badge color="gray">Free Plan</Badge>
                   )}
                 </div>
                 {data.subscription.renewsAt && (
