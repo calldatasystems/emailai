@@ -38,7 +38,7 @@ export const env = createEnv({
     QSTASH_TOKEN: z.string().optional(),
     QSTASH_CURRENT_SIGNING_KEY: z.string().optional(),
     QSTASH_NEXT_SIGNING_KEY: z.string().optional(),
-    GOOGLE_PUBSUB_TOPIC_NAME: z.string().min(1),
+    GOOGLE_PUBSUB_TOPIC_NAME: z.string().optional(),
     GOOGLE_PUBSUB_VERIFICATION_TOKEN: z.string().optional(),
     SENTRY_AUTH_TOKEN: z.string().optional(),
     SENTRY_ORGANIZATION: z.string().optional(),
