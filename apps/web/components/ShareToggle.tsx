@@ -66,7 +66,7 @@ export function ShareToggle({
 
   if (!canShare) {
     return (
-      <Button variant="ghost" size="sm" disabled className={className}>
+      <Button size="sm" disabled className={className}>
         {isShared ? (
           <>
             <Users className="mr-2 h-4 w-4" />
@@ -86,7 +86,6 @@ export function ShareToggle({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="ghost"
           size="sm"
           disabled={isToggling}
           className={className}
