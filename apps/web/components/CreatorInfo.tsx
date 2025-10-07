@@ -32,7 +32,7 @@ export function CreatorInfo({
         <ProfileImage
           imageUrl={creator.image}
           name={displayName}
-          size="xs"
+          size={24}
         />
         <span className="font-medium">{displayName}</span>
       </div>
