@@ -225,9 +225,7 @@ async function migratePremiumToOrganizations(
   const usersWithPremium = await prisma.user.findMany({
     where: {
       premium: {
-        some: {
-          id: { not: undefined },
-        },
+        isNot: null,
       },
     },
     include: {
@@ -252,30 +250,33 @@ async function migratePremiumToOrganizations(
   let errors = 0;
 
   for (const user of usersWithPremium) {
-    const userPremiums = user.premium;
+    const premium = user.premium;
 
-    for (const premium of userPremiums) {
-      // Skip if already linked to an organization
-      if (premium.organizations.length > 0) {
-        logger.info("Premium already linked to organization, skipping", {
-          userId: user.id,
-          premiumId: premium.id,
-          linkedOrgs: premium.organizations.length,
-        });
-        skipped++;
-        continue;
-      }
+    if (!premium) {
+      continue;
+    }
 
-      const defaultOrg = user.organizationMembers[0]?.organization;
+    // Skip if already linked to an organization
+    if (premium.organizations.length > 0) {
+      logger.info("Premium already linked to organization, skipping", {
+        userId: user.id,
+        premiumId: premium.id,
+        linkedOrgs: premium.organizations.length,
+      });
+      skipped++;
+      continue;
+    }
 
-      if (!defaultOrg) {
-        logger.error("User has no organization, cannot migrate premium", {
-          userId: user.id,
-          email: user.email,
-        });
-        errors++;
-        continue;
-      }
+    const defaultOrg = user.organizationMembers[0]?.organization;
+
+    if (!defaultOrg) {
+      logger.error("User has no organization, cannot migrate premium", {
+        userId: user.id,
+        email: user.email,
+      });
+      errors++;
+      continue;
+    }
 
       logger.info("Migrating Premium to organization", {
         userId: user.id,
@@ -317,7 +318,6 @@ async function migratePremiumToOrganizations(
         });
         migrated++;
       }
-    }
   }
 
   logger.info("Premium migration phase complete", {
