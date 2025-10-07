@@ -134,7 +134,7 @@ export function OrganizationSettingsContent() {
                     <FormItem>
                       <FormLabel>Domain (Optional)</FormLabel>
                       <FormControl>
-                        <Input placeholder="company.com" {...field} />
+                        <Input type="text" placeholder="company.com" {...field} />
                       </FormControl>
                       <FormDescription>
                         Your organization's domain. Users with this email domain
@@ -153,6 +153,7 @@ export function OrganizationSettingsContent() {
                       <FormLabel>Logo URL (Optional)</FormLabel>
                       <FormControl>
                         <Input
+                          type="text"
                           placeholder="https://example.com/logo.png"
                           {...field}
                         />
