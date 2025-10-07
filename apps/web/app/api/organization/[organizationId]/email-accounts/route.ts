@@ -11,7 +11,7 @@ import { withError } from "@/utils/middleware";
 export const GET = withError(
   async (
     _request: Request,
-    context: { params: Promise<{ organizationId: string }> },
+    context: { params: Promise<Record<string, string>> },
   ) => {
     const session = await auth();
     if (!session?.user.id) {
