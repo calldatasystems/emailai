@@ -39,10 +39,7 @@ async function migrateBillingToOrgs(options: MigrationOptions) {
     where: {
       id: userId || undefined,
       premium: {
-        some: {
-          // Premium exists
-          id: { not: undefined },
-        },
+        isNot: null,
       },
     },
     include: {
