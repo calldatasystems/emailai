@@ -16,7 +16,7 @@ export const DELETE = withError(
   async (
     _request: Request,
     context: {
-      params: Promise<{ organizationId: string; memberId: string }>;
+      params: Promise<Record<string, string>>;
     },
   ) => {
     const session = await auth();
