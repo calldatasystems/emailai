@@ -161,9 +161,9 @@ export function OrganizationMembers() {
                       {member.role !== "OWNER" && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
+                            <button className="inline-flex h-8 items-center justify-center rounded-md px-2 hover:bg-gray-100">
                               <MoreVertical className="h-4 w-4" />
-                            </Button>
+                            </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
