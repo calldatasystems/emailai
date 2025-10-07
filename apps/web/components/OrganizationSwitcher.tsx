@@ -45,7 +45,7 @@ export function OrganizationSwitcher({
 
   if (isLoadingOrganizations) {
     return (
-      <Button variant="ghost" disabled className={className}>
+      <Button disabled className={className}>
         <Building2 className="mr-2 h-4 w-4" />
         <span className="text-sm">Loading...</span>
       </Button>
