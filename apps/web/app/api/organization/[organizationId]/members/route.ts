@@ -40,7 +40,7 @@ export const GET = withError(
     }
 
     // Return members with their user info and role
-    const members = organization.members.map((member) => ({
+    const members = organization.members.map((member: any) => ({
       id: member.id,
       name: member.user.name,
       email: member.user.email,
