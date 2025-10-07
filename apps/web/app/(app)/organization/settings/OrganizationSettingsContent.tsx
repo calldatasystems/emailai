@@ -84,7 +84,7 @@ export function OrganizationSettingsContent() {
 
   if (!organization) {
     return (
-      <LoadingContent loading={true} error={null}>
+      <LoadingContent loading={true} error={undefined}>
         <div />
       </LoadingContent>
     );
