@@ -60,7 +60,6 @@ export function OrganizationSwitcher({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="ghost"
           disabled={isSwitching}
           className={cn(
             "w-full justify-between px-2",
