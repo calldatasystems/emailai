@@ -143,7 +143,7 @@ export function OrganizationBilling() {
                   </>
                 ) : (
                   <Link href="/premium">
-                    <Button variant="primaryBlue">
+                    <Button color="blue">
                       <TrendingUp className="mr-2 h-4 w-4" />
                       Upgrade to Premium
                     </Button>
