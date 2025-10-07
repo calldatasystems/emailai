@@ -117,7 +117,7 @@ export function OrganizationSettingsContent() {
                     <FormItem>
                       <FormLabel>Organization Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="My Organization" {...field} />
+                        <Input type="text" placeholder="My Organization" {...field} />
                       </FormControl>
                       <FormDescription>
                         The name of your organization.
