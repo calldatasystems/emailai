@@ -48,7 +48,7 @@ async function migrateBillingToOrgs(options: MigrationOptions) {
           organizations: true, // Check if already linked
         },
       },
-      organizationMemberships: {
+      organizationMembers: {
         include: {
           organization: true,
         },
@@ -81,7 +81,7 @@ async function migrateBillingToOrgs(options: MigrationOptions) {
       }
 
       // Get user's default organization (first created, usually personal)
-      const defaultOrg = user.organizationMemberships[0]?.organization;
+      const defaultOrg = user.organizationMembers[0]?.organization;
 
       if (!defaultOrg) {
         logger.error("User has no organization, cannot migrate", {
