@@ -47,7 +47,7 @@ export async function checkEligibilityAfterEmailSent(userId: string) {
             fineTuningEligible: {
               timestamp: new Date().toISOString(),
               sentEmailCount: result.sentEmailCount,
-              message: result.message,
+              message: "message" in result ? result.message : "",
             },
           },
         },
@@ -102,7 +102,7 @@ export async function batchCheckEligibility() {
               fineTuningEligible: {
                 timestamp: new Date().toISOString(),
                 sentEmailCount: result.sentEmailCount,
-                message: result.message,
+                message: "message" in result ? result.message : "",
               },
             },
           },
