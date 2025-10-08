@@ -43,6 +43,7 @@ export const analyzeWritingStyleAction = actionClient
         userId: true,
         email: true,
         about: true,
+        organizationId: true,
         user: { select: { aiProvider: true, aiModel: true, aiApiKey: true } },
       },
     });

@@ -26,6 +26,7 @@ export async function enableReplyTracker({
       userId: true,
       email: true,
       about: true,
+      organizationId: true,
       rulesPrompt: true,
       user: {
         select: {
