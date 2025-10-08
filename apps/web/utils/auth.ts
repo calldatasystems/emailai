@@ -1,6 +1,7 @@
 // based on: https://github.com/vercel/platforms/blob/main/lib/auth.ts
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import type { Prisma } from "@prisma/client";
+import { OrganizationRole } from "@prisma/client";
 import type { NextAuthConfig, DefaultSession } from "next-auth";
 import type { JWT } from "@auth/core/jwt";
 import GoogleProvider from "next-auth/providers/google";
@@ -268,7 +269,7 @@ export const getAuthOptions: (options?: {
       // Include organization context in session (multi-tenant)
       session.organizationId = token.organizationId as string | undefined;
       session.organizationSlug = token.organizationSlug as string | undefined;
-      session.organizationRole = token.organizationRole as typeof token.organizationRole;
+      session.organizationRole = token.organizationRole as OrganizationRole | undefined;
 
       if (session.error) {
         logger.error("session.error", {
