@@ -65,7 +65,7 @@ export async function checkGuardrailsBeforeSend(
       threadId: email.threadId,
       messageId: email.id,
       isReply: actionType === "REPLY",
-      previousEmails: email.snippet ? [{ from: email.headers.from, body: email.snippet }] : undefined,
+      previousEmails: email.textPlain ? [{ from: email.headers.from, body: email.textPlain }] : undefined,
     };
 
     // Evaluate against guardrails
