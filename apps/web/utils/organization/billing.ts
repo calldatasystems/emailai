@@ -89,10 +89,10 @@ export async function updateOrganizationSeats({
     }
   } else if (premium.lemonSqueezySubscriptionItemId) {
     try {
-      await updateSubscriptionItemQuantity(
-        premium.lemonSqueezySubscriptionItemId,
-        usedSeats,
-      );
+      await updateSubscriptionItemQuantity({
+        subscriptionItemId: premium.lemonSqueezySubscriptionItemId,
+        quantity: usedSeats,
+      });
       logger.info("Updated LemonSqueezy subscription", {
         organizationId,
         seats: usedSeats,
