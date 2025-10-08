@@ -72,10 +72,10 @@ export async function updateOrganizationSeats({
   // Sync with payment provider
   if (premium.stripeSubscriptionItemId) {
     try {
-      await updateStripeSubscriptionItemQuantity(
-        premium.stripeSubscriptionItemId,
-        usedSeats,
-      );
+      await updateStripeSubscriptionItemQuantity({
+        subscriptionItemId: premium.stripeSubscriptionItemId,
+        quantity: usedSeats,
+      });
       logger.info("Updated Stripe subscription", {
         organizationId,
         seats: usedSeats,
