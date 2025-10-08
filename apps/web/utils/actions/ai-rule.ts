@@ -239,6 +239,7 @@ export const approvePlanAction = actionClient
               userId: emailAccount.userId,
               email: emailAccount.email,
               about: emailAccount.about,
+              organizationId: emailAccount.organizationId,
               user,
             }
           : undefined,

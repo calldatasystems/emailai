@@ -66,14 +66,9 @@ export async function executeAct({
         emailAccount &&
         (action.type === ActionType.REPLY || action.type === ActionType.SEND_EMAIL)
       ) {
-        const user = await prisma.user.findUnique({
-          where: { id: userId },
-          select: { organizationId: true },
-        });
-
         const checkResult = await checkGuardrailsBeforeSend({
           userId,
-          organizationId: user?.organizationId || null,
+          organizationId: emailAccount.organizationId || null,
           emailAccount,
           email: message,
           draftContent: (action as any).content || "",
