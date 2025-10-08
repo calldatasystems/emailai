@@ -316,6 +316,7 @@ async function getEmailAccountWithRules({
       userId: true,
       email: true,
       about: true,
+      organizationId: true,
       user: {
         select: {
           aiProvider: true,
