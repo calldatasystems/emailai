@@ -48,7 +48,7 @@ export class FineTuningService {
         emailAccount: {
           userId,
         },
-        isSent: true,
+        sent: true,
       },
     });
 
