@@ -13,6 +13,7 @@ export async function getEmailAccountWithAi({
       userId: true,
       email: true,
       about: true,
+      organizationId: true,
       user: {
         select: {
           aiProvider: true,
@@ -36,6 +37,7 @@ export async function getEmailAccountWithAiAndTokens({
       userId: true,
       email: true,
       about: true,
+      organizationId: true,
       user: {
         select: {
           aiProvider: true,

@@ -284,6 +284,7 @@ export const saveRulesPromptAction = actionClient
         email: true,
         userId: true,
         about: true,
+        organizationId: true,
         rulesPrompt: true,
         categories: { select: { id: true, name: true } },
         user: {
