@@ -216,6 +216,16 @@ export const approvePlanAction = actionClient
       });
       if (!executedRule) return { error: "Item not found" };
 
+      // Fetch user data for EmailAccountWithAI
+      const user = await prisma.user.findUnique({
+        where: { id: emailAccount.userId },
+        select: {
+          aiProvider: true,
+          aiModel: true,
+          aiApiKey: true,
+        },
+      });
+
       await executeAct({
         gmail,
         message,
@@ -223,7 +233,15 @@ export const approvePlanAction = actionClient
         userEmail: emailAccount.email,
         userId: emailAccount.userId,
         emailAccountId,
-        emailAccount,
+        emailAccount: user
+          ? {
+              id: emailAccount.id,
+              userId: emailAccount.userId,
+              email: emailAccount.email,
+              about: emailAccount.about,
+              user,
+            }
+          : undefined,
       });
     },
   );
