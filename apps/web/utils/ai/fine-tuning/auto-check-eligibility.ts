@@ -21,7 +21,7 @@ export async function checkEligibilityAfterEmailSent(userId: string) {
     const sentEmailCount = await prisma.emailMessage.count({
       where: {
         emailAccount: { userId },
-        isSent: true,
+        sent: true,
       },
     });
 
