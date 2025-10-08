@@ -9,6 +9,7 @@ import { prisma } from "@/utils/prisma";
 import { chatCompletionObject } from "@/utils/llms";
 import { createScopedLogger } from "@/utils/logger";
 import type { EmailAccountWithAI } from "@/utils/llms/types";
+import { GuardrailSeverity } from "@prisma/client";
 import { z } from "zod";
 
 const logger = createScopedLogger("guardrail-service");
@@ -348,7 +349,7 @@ Does this email violate the guardrail? Should it be blocked from auto-sending?`;
         name: "Date/Time Commitment Check",
         description:
           "Do not auto-send if the recipient is asking for a specific date, time, or meeting commitment. Hold for user review to ensure availability.",
-        severity: "BLOCK",
+        severity: GuardrailSeverity.BLOCK,
         action: "HOLD_FOR_REVIEW",
         priority: 100,
         examples: {
@@ -363,7 +364,7 @@ Does this email violate the guardrail? Should it be blocked from auto-sending?`;
         name: "Objectionable Language Check",
         description:
           "Do not auto-send if the email contains profanity, offensive language, or inappropriate content.",
-        severity: "BLOCK",
+        severity: GuardrailSeverity.BLOCK,
         action: "HOLD_FOR_REVIEW",
         priority: 200,
       },
@@ -371,7 +372,7 @@ Does this email violate the guardrail? Should it be blocked from auto-sending?`;
         name: "Financial Commitment Check",
         description:
           "Do not auto-send if the recipient is asking about pricing, contracts, or financial commitments. Hold for review.",
-        severity: "BLOCK",
+        severity: GuardrailSeverity.BLOCK,
         action: "HOLD_FOR_REVIEW",
         priority: 90,
         examples: {
@@ -386,7 +387,7 @@ Does this email violate the guardrail? Should it be blocked from auto-sending?`;
         name: "Sensitive Topic Check",
         description:
           "Do not auto-send if the email discusses sensitive topics like legal matters, HR issues, or confidential information.",
-        severity: "BLOCK",
+        severity: GuardrailSeverity.BLOCK,
         action: "HOLD_FOR_REVIEW",
         priority: 150,
       },
@@ -394,7 +395,7 @@ Does this email violate the guardrail? Should it be blocked from auto-sending?`;
         name: "Request for Detailed Information",
         description:
           "Warn if the recipient is asking for detailed technical information or specifications that may require careful review.",
-        severity: "WARN",
+        severity: GuardrailSeverity.WARN,
         action: "ASK_USER",
         priority: 50,
       },
@@ -402,7 +403,7 @@ Does this email violate the guardrail? Should it be blocked from auto-sending?`;
         name: "First-Time Contact",
         description:
           "Warn when replying to someone for the first time to ensure appropriate tone and content.",
-        severity: "WARN",
+        severity: GuardrailSeverity.WARN,
         action: "ASK_USER",
         priority: 40,
       },
