@@ -15,7 +15,9 @@
       "Bash(bash:*)",
       "Bash(dos2unix:*)",
       "Bash(git reset:*)",
-      "Bash(git -C /mnt/c/Users/aqorn/Documents/CODE/emailai diff apps/web/utils/actions/rule.ts)"
+      "Bash(git -C /mnt/c/Users/aqorn/Documents/CODE/emailai diff apps/web/utils/actions/rule.ts)",
+      "Bash(curl -s \"https://vercel.com/adams-projects-e2f86bd9/emailai/2P3yM66pnJmxpA2iwRUkQPR6DtUo\")",
+      "Bash(curl -s \"https://vercel.com/adams-projects-e2f86bd9/emailai/9ugVRz8YUaw9tEKxZLuufLyXwrMG\")"
     ],
     "deny": [],
     "ask": []

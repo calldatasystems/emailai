@@ -817,8 +817,8 @@ function ReplyTrackerAction() {
   return (
     <div className="flex h-full items-center justify-center">
       <div className="max-w-sm text-center text-sm text-muted-foreground">
-        Used for reply tracking (Reply Zero). This action tracks emails this
-        rule is applied to and removes the{" "}
+        Used for reply tracking (EmailAI). This action tracks emails this rule
+        is applied to and removes the{" "}
         <Badge color="green">{NEEDS_REPLY_LABEL_NAME}</Badge> label after you
         reply to the email.
       </div>

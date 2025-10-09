@@ -23,7 +23,7 @@ export const enableReplyTrackerAction = actionClient
   .action(async ({ ctx: { emailAccountId } }) => {
     await enableReplyTracker({ emailAccountId });
 
-    revalidatePath(prefixPath(emailAccountId, "/reply-zero"));
+    revalidatePath(prefixPath(emailAccountId, "/reply-ai"));
 
     return { success: true };
   });
@@ -54,7 +54,7 @@ export const resolveThreadTrackerAction = actionClient
       parsedInput: { threadId, resolved },
     }) => {
       await startAnalyzingReplyTracker({ emailAccountId }).catch((error) => {
-        logger.error("Error starting Reply Zero analysis", { error });
+        logger.error("Error starting ReplyAI analysis", { error });
       });
 
       await prisma.threadTracker.updateMany({
@@ -66,10 +66,10 @@ export const resolveThreadTrackerAction = actionClient
       });
 
       await stopAnalyzingReplyTracker({ emailAccountId }).catch((error) => {
-        logger.error("Error stopping Reply Zero analysis", { error });
+        logger.error("Error stopping ReplyAI analysis", { error });
       });
 
-      revalidatePath(prefixPath(emailAccountId, "/reply-zero"));
+      revalidatePath(prefixPath(emailAccountId, "/reply-ai"));
 
       return { success: true };
     },

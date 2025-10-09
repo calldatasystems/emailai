@@ -69,4 +69,4 @@ Rules specific to major application features.
 | :--------------------------------- | :---------------------------------------------------------- |
 | @features/cleaner.mdc              | Explains the Inbox Cleaner feature                          |
 | @features/knowledge.mdc            | Explains the Knowledge Base feature                         |
-| @features/reply-tracker.mdc        | Explains the Reply Tracker (Reply Zero) feature             |
+| @features/reply-tracker.mdc        | Explains the Reply Tracker (EmailAI) feature             |

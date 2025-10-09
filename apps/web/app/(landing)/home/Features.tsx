@@ -22,7 +22,7 @@ export function FeaturesHome() {
   return (
     <>
       <FeaturesAiAssistant />
-      <FeaturesReplyZero imageSide="right" />
+      <FeaturesReplyAI imageSide="right" />
       <FeaturesUnsubscribe />
       <FeaturesColdEmailBlocker imageSide="right" />
       <FeaturesStats />
@@ -252,7 +252,7 @@ export function FeaturesUnsubscribe({ imageSide }: { imageSide?: Side }) {
   );
 }
 
-const featuresReplyZero = [
+const featuresReplyAI = [
   {
     name: "Pre-drafted replies",
     description:
@@ -279,15 +279,15 @@ const featuresReplyZero = [
   },
 ];
 
-export function FeaturesReplyZero({ imageSide }: { imageSide?: Side }) {
+export function FeaturesReplyAI({ imageSide }: { imageSide?: Side }) {
   return (
     <FeaturesWithImage
       imageSide={imageSide}
-      title="Reply Zero"
+      title="ReplyAI"
       subtitle="Pre-written drafts waiting in your inbox"
-      description="Focus only on emails needing your attention. Reply Zero identifies them and prepares draft replies, letting you skip the noise and respond faster."
-      image="/images/home/reply-zero.png"
-      features={featuresReplyZero}
+      description="Focus only on emails needing your attention. ReplyAI identifies them and prepares draft replies, letting you skip the noise and respond faster."
+      image="/images/home/reply-ai.png"
+      features={featuresReplyAI}
     />
   );
 }

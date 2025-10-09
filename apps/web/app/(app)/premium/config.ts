@@ -131,7 +131,7 @@ const aiAssistantFeature = {
   tooltip: "AI assistant that drafts replies and organizes your inbox",
 };
 
-const replyZeroFeature = {
+const replyAIFeature = {
   text: "Auto drafted replies",
   tooltip: "Prewritten drafts ready to send in your inbox",
 };
@@ -202,7 +202,7 @@ const businessTier: Tier = {
     "For individuals and businesses that want to get their email under control.",
   features: [
     aiAssistantFeature,
-    replyZeroFeature,
+    replyAIFeature,
     coldEmailBlockerFeature,
     bulkUnsubscribeFeature,
     analyticsFeature,
@@ -242,7 +242,7 @@ const businessPlusTier: Tier = {
     "For teams handling high email volumes: streamline repetitive tasks, outreach, and support.",
   features: [
     aiAssistantFeature,
-    replyZeroFeature,
+    replyAIFeature,
     coldEmailBlockerFeature,
     bulkUnsubscribeFeature,
     analyticsFeature,

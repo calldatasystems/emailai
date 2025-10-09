@@ -162,7 +162,12 @@ const nextConfig = {
       },
       {
         source: "/reply-tracker",
-        destination: "/reply-zero",
+        destination: "/reply-ai",
+        permanent: false,
+      },
+      {
+        source: "/reply-zero",
+        destination: "/reply-ai",
         permanent: false,
       },
       {
