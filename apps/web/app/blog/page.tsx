@@ -5,6 +5,7 @@ import { sanityFetch } from "@/sanity/lib/fetch";
 import { postsQuery } from "@/sanity/lib/queries";
 import type { Post as PostType } from "@/app/blog/types";
 import { Card, CardContent } from "@/components/ui/card";
+import { client } from "@/sanity/lib/client";
 
 type Post = {
   title: string;
@@ -206,9 +207,9 @@ const mdxPosts: Post[] = [
 export const revalidate = 60;
 
 export default async function BlogContentsPage() {
-  // Skip Sanity fetch during build with dummy credentials
+  // Skip Sanity fetch during build with dummy credentials or if client is not configured
   let posts: SanityPost[] = [];
-  if (process.env.NEXT_PUBLIC_SANITY_PROJECT_ID !== 'dummy-sanity-project-id-for-build') {
+  if (client && process.env.NEXT_PUBLIC_SANITY_PROJECT_ID !== 'dummy-sanity-project-id-for-build') {
     posts = await sanityFetch<SanityPost[]>({ query: postsQuery });
   }
 
