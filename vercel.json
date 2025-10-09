@@ -1,6 +1,4 @@
 {
-  "buildCommand": "turbo run build --filter={apps/web}...",
   "installCommand": "pnpm install --shamefully-hoist",
-  "ignoreCommand": "",
   "framework": "nextjs"
 }
