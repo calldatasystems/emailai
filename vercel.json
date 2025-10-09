@@ -1,4 +1,6 @@
 {
+  "buildCommand": "cd apps/web && pnpm build",
   "installCommand": "pnpm install --shamefully-hoist",
+  "outputDirectory": "apps/web/.next",
   "framework": "nextjs"
 }
