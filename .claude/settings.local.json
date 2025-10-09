@@ -13,7 +13,9 @@
       "Bash(done)",
       "Bash(do sed -i 's|github.com/aqorn/emailai|github.com/calldatasystems/emailai|g' \"$file\")",
       "Bash(bash:*)",
-      "Bash(dos2unix:*)"
+      "Bash(dos2unix:*)",
+      "Bash(git reset:*)",
+      "Bash(git -C /mnt/c/Users/aqorn/Documents/CODE/emailai diff apps/web/utils/actions/rule.ts)"
     ],
     "deny": [],
     "ask": []

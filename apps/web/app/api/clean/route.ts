@@ -1,7 +1,7 @@
-import { verifySignatureAppRouter } from "@upstash/qstash/dist/nextjs";
 import { z } from "zod";
 import { NextResponse } from "next/server";
 import { withError } from "@/utils/middleware";
+import { withQStashVerification } from "@/utils/qstash";
 import { publishToQstash } from "@/utils/upstash";
 import { getThreadMessages } from "@/utils/gmail/thread";
 import { getGmailClientWithRefresh } from "@/utils/gmail/client";
@@ -284,7 +284,7 @@ function getPublish({
 }
 
 export const POST = withError(
-  verifySignatureAppRouter(async (request: Request) => {
+  withQStashVerification(async (request: Request) => {
     const json = await request.json();
     const body = cleanThreadBody.parse(json);
 
