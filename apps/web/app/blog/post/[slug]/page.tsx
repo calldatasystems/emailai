@@ -10,7 +10,7 @@ import { captureException } from "@/utils/error";
 export const revalidate = 60;
 
 export async function generateStaticParams() {
-  if (process.env.NEXT_PUBLIC_SANITY_PROJECT_ID === 'dummy-sanity-project-id-for-build') {
+  if (process.env.NEXT_PUBLIC_SANITY_PROJECT_ID === 'dummy-sanity-project-id-for-build' || !client) {
     return [];
   }
   const posts = await client.fetch(postPathsQuery);
@@ -43,8 +43,8 @@ export async function generateMetadata(
 
   const previousImages = (await parent).openGraph?.images || [];
 
-  const builder = imageUrlBuilder(client);
-  const imageUrl = post.mainImage
+  const builder = client ? imageUrlBuilder(client) : null;
+  const imageUrl = post.mainImage && builder
     ? builder
         .image(post.mainImage)
         .auto("format")
