@@ -7,6 +7,7 @@ const project = resolve(process.cwd(), "tsconfig.json");
 /** @type {import("eslint").Linter.Config} */
 module.exports = {
   extends: [
+    "next/core-web-vitals",
     // "eslint:recommended",
     // "prettier",
     // require.resolve("@vercel/style-guide/eslint/next"),
