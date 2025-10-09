@@ -167,7 +167,7 @@ export async function getOrganizationBilling(organizationId: string) {
           maxSeats: true,
           usedSeats: true,
           lemonSqueezyRenewsAt: true,
-          lemonSqueezySubscriptionStatus: true,
+          lemonSubscriptionStatus: true,
           stripeRenewsAt: true,
           stripeSubscriptionStatus: true,
           stripeCancelAtPeriodEnd: true,
@@ -187,7 +187,7 @@ export async function getOrganizationBilling(organizationId: string) {
   }
 
   const hasStripe = !!organization.premium?.stripeSubscriptionStatus;
-  const hasLemon = !!organization.premium?.lemonSqueezySubscriptionStatus;
+  const hasLemon = !!organization.premium?.lemonSubscriptionStatus;
 
   return {
     organizationId: organization.id,
@@ -208,7 +208,7 @@ export async function getOrganizationBilling(organizationId: string) {
     subscription: {
       status: hasStripe
         ? organization.premium?.stripeSubscriptionStatus
-        : organization.premium?.lemonSqueezySubscriptionStatus,
+        : organization.premium?.lemonSubscriptionStatus,
       renewsAt: hasStripe
         ? organization.premium?.stripeRenewsAt
         : organization.premium?.lemonSqueezyRenewsAt,
