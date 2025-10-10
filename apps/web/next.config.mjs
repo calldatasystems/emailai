@@ -7,7 +7,10 @@ import withSerwistInit from "@serwist/next";
 const jiti = createJiti(fileURLToPath(import.meta.url));
 
 // Import env here to validate during build. Using jiti we can import .ts files :)
-const { env } = await jiti.import("./env");
+// Skip validation during Vercel builds when DATABASE_URL is not set (preview deployments)
+const { env } = process.env.VERCEL && !process.env.DATABASE_URL
+  ? { env: { NODE_ENV: process.env.NODE_ENV || "production", NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL || "" } }
+  : await jiti.import("./env");
 
 const withMDX = nextMdx();
 
