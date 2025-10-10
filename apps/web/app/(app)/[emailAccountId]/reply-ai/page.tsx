@@ -11,7 +11,7 @@ import { isAnalyzingReplyTracker } from "@/utils/redis/reply-tracker-analyzing";
 import { TabsToolbar } from "@/components/TabsToolbar";
 import { GmailProvider } from "@/providers/GmailProvider";
 import { cookies } from "next/headers";
-import { REPLY_ZERO_ONBOARDING_COOKIE } from "@/utils/cookies";
+import { REPLY_AI_ONBOARDING_COOKIE } from "@/utils/cookies";
 import { ActionType } from "@prisma/client";
 import { prefixPath } from "@/utils/path";
 
@@ -30,10 +30,10 @@ export default async function ReplyTrackerPage(props: {
 
   const cookieStore = await cookies();
   const viewedOnboarding =
-    cookieStore.get(REPLY_ZERO_ONBOARDING_COOKIE)?.value === "true";
+    cookieStore.get(REPLY_AI_ONBOARDING_COOKIE)?.value === "true";
 
   if (!viewedOnboarding)
-    redirect(prefixPath(emailAccountId, "/reply-zero/onboarding"));
+    redirect(prefixPath(emailAccountId, "/reply-ai/onboarding"));
 
   const emailAccount = await prisma.emailAccount.findUnique({
     where: { id: emailAccountId },
@@ -51,7 +51,7 @@ export default async function ReplyTrackerPage(props: {
   const trackerRule = emailAccount?.rules[0];
 
   if (!trackerRule)
-    redirect(prefixPath(emailAccountId, "/reply-zero/onboarding"));
+    redirect(prefixPath(emailAccountId, "/reply-ai/onboarding"));
 
   const isAnalyzing = await isAnalyzingReplyTracker({ emailAccountId });
 

@@ -1,6 +1,5 @@
 import { fileURLToPath } from "node:url";
 import { withSentryConfig } from "@sentry/nextjs";
-import { withAxiom } from "next-axiom";
 import nextMdx from "@next/mdx";
 import { createJiti } from "jiti";
 import withSerwistInit from "@serwist/next";
@@ -8,7 +7,10 @@ import withSerwistInit from "@serwist/next";
 const jiti = createJiti(fileURLToPath(import.meta.url));
 
 // Import env here to validate during build. Using jiti we can import .ts files :)
-const { env } = await jiti.import("./env");
+// Skip validation when required env vars are missing (preview deployments or local builds)
+const { env } = !process.env.DATABASE_URL || !process.env.GOOGLE_ENCRYPT_SECRET
+  ? { env: { NODE_ENV: process.env.NODE_ENV || "production", NEXT_PUBLIC_BASE_URL: process.env.NEXT_PUBLIC_BASE_URL || "" } }
+  : await jiti.import("./env");
 
 const withMDX = nextMdx();
 
@@ -162,7 +164,12 @@ const nextConfig = {
       },
       {
         source: "/reply-tracker",
-        destination: "/reply-zero",
+        destination: "/reply-ai",
+        permanent: false,
+      },
+      {
+        source: "/reply-zero",
+        destination: "/reply-ai",
         permanent: false,
       },
       {
@@ -316,4 +323,4 @@ const withSerwist = withSerwistInit({
   disable: env.NODE_ENV !== "production",
 });
 
-export default withAxiom(withSerwist(exportConfig));
+export default withSerwist(exportConfig);

@@ -304,7 +304,7 @@ export const updateRuleSettingsAction = actionClient
 
       revalidatePath(prefixPath(emailAccountId, `/automation/rule/${id}`));
       revalidatePath(prefixPath(emailAccountId, "/automation"));
-      revalidatePath(prefixPath(emailAccountId, "/reply-zero"));
+      revalidatePath(prefixPath(emailAccountId, "/reply-ai"));
     },
   );
 
@@ -336,7 +336,7 @@ export const enableDraftRepliesAction = actionClient
 
     revalidatePath(prefixPath(emailAccountId, `/automation/rule/${rule.id}`));
     revalidatePath(prefixPath(emailAccountId, "/automation"));
-    revalidatePath(prefixPath(emailAccountId, "/reply-zero"));
+    revalidatePath(prefixPath(emailAccountId, "/reply-ai"));
   });
 
 export const deleteRuleAction = actionClient
@@ -368,6 +368,7 @@ export const deleteRuleAction = actionClient
             userId: true,
             email: true,
             about: true,
+            organizationId: true,
             rulesPrompt: true,
             user: {
               select: {

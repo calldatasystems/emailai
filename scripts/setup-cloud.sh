@@ -485,7 +485,7 @@ mkdir -p /opt/emailai
 cd /opt/emailai
 
 # Clone repository (will need to be configured with deploy key)
-# git clone https://github.com/your-org/emailai.git .
+# git clone https://github.com/calldatasystems/emailai.git .
 
 # Install dependencies
 # npm install

@@ -24,7 +24,7 @@ const updateOrganizationSchema = z.object({
 export const GET = withError(
   async (
     _request: Request,
-    context: { params: Promise<{ organizationId: string }> },
+    context: { params: Promise<Record<string, string>> },
   ) => {
     const session = await auth();
     if (!session?.user.id) {
@@ -66,7 +66,7 @@ export const GET = withError(
 export const PATCH = withError(
   async (
     request: Request,
-    context: { params: Promise<{ organizationId: string }> },
+    context: { params: Promise<Record<string, string>> },
   ) => {
     const session = await auth();
     if (!session?.user.id) {
@@ -111,7 +111,7 @@ export const PATCH = withError(
 export const DELETE = withError(
   async (
     _request: Request,
-    context: { params: Promise<{ organizationId: string }> },
+    context: { params: Promise<Record<string, string>> },
   ) => {
     const session = await auth();
     if (!session?.user.id) {

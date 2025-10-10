@@ -106,6 +106,7 @@ async function processAssistantEmailInternal({
         userId: true,
         email: true,
         about: true,
+        organizationId: true,
         user: {
           select: {
             aiProvider: true,

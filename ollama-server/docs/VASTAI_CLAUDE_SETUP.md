@@ -121,7 +121,7 @@ Follow authentication prompts:
 
 ```bash
 # Clone the repo
-git clone https://github.com/your-org/emailai.git
+git clone https://github.com/calldatasystems/emailai.git
 cd emailai
 ```
 
@@ -310,7 +310,7 @@ kill -9 PID
 
 4. **Clone EmailAI**:
    ```bash
-   git clone https://github.com/your-org/emailai.git
+   git clone https://github.com/calldatasystems/emailai.git
    cd emailai
    ```
 
@@ -426,7 +426,7 @@ claude
 # Reattach: screen -r claude
 
 # Clone EmailAI
-git clone https://github.com/your-org/emailai.git
+git clone https://github.com/calldatasystems/emailai.git
 cd emailai
 
 # Run Ollama setup via Claude
@@ -536,7 +536,7 @@ root@vast:~# curl -fsSL https://raw.githubusercontent.com/anthropics/claude-code
 root@vast:~# screen -S setup
 
 # 4. Clone repo
-root@vast:~# git clone https://github.com/your-org/emailai.git
+root@vast:~# git clone https://github.com/calldatasystems/emailai.git
 root@vast:~# cd emailai
 
 # 5. Start Claude

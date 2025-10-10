@@ -451,7 +451,7 @@ Visit `https://ai.calldata.app` - should connect to your Ollama server securely!
 
 3. **Deploy Ollama:**
    ```bash
-   git clone https://github.com/your-org/emailai.git
+   git clone https://github.com/calldatasystems/emailai.git
    cd emailai/ollama-server/scripts
    sudo bash setup.sh prod
    ```

@@ -3,6 +3,9 @@ import type { SWRResponse } from "swr";
 // Define the standard error shape we want to normalize to
 type NormalizedError = { error: string };
 
+// Standard fetcher for SWR
+export const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
 /**
  * Processes the result of an SWR hook, normalizing errors.
  * Assumes the API might return an object like { error: string } instead of data on failure.

@@ -82,7 +82,7 @@ export function OrganizationBilling() {
                 <div className="mt-2 flex items-center gap-2">
                   {data.hasPremium && data.tier ? (
                     <>
-                      <Badge className="text-base">
+                      <Badge color="blue" className="text-base">
                         {capitalCase(data.tier)}
                       </Badge>
                       {data.subscription.status && (
@@ -92,7 +92,7 @@ export function OrganizationBilling() {
                       )}
                     </>
                   ) : (
-                    <Badge variant="outline">Free Plan</Badge>
+                    <Badge color="gray">Free Plan</Badge>
                   )}
                 </div>
                 {data.subscription.renewsAt && (
@@ -130,24 +130,24 @@ export function OrganizationBilling() {
                       </Button>
                     )}
                     {data.subscription.provider === "lemon" && (
-                      <Button asChild>
-                        <Link
-                          href={`https://${env.NEXT_PUBLIC_LEMON_STORE_ID}.lemonsqueezy.com/billing`}
-                          target="_blank"
-                        >
+                      <Link
+                        href={`https://${env.NEXT_PUBLIC_LEMON_STORE_ID}.lemonsqueezy.com/billing`}
+                        target="_blank"
+                      >
+                        <Button>
                           <CreditCardIcon className="mr-2 h-4 w-4" />
                           Manage Subscription
-                        </Link>
-                      </Button>
+                        </Button>
+                      </Link>
                     )}
                   </>
                 ) : (
-                  <Button variant="primaryBlue" asChild>
-                    <Link href="/premium">
+                  <Link href="/premium">
+                    <Button color="blue">
                       <TrendingUp className="mr-2 h-4 w-4" />
                       Upgrade to Premium
-                    </Link>
-                  </Button>
+                    </Button>
+                  </Link>
                 )}
               </div>
             </div>

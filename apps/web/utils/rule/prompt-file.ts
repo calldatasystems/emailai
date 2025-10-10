@@ -32,6 +32,7 @@ export async function updatePromptFileOnRuleUpdated({
       email: true,
       userId: true,
       about: true,
+      organizationId: true,
       rulesPrompt: true,
       user: { select: { aiProvider: true, aiModel: true, aiApiKey: true } },
     },

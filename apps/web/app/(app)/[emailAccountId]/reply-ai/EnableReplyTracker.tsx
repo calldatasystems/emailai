@@ -17,7 +17,7 @@ import {
 } from "@/utils/reply-tracker/consts";
 import {
   markOnboardingAsCompleted,
-  REPLY_ZERO_ONBOARDING_COOKIE,
+  REPLY_AI_ONBOARDING_COOKIE,
 } from "@/utils/cookies";
 import { useAccount } from "@/providers/EmailAccountProvider";
 import { prefixPath } from "@/utils/path";
@@ -28,12 +28,12 @@ export function EnableReplyTracker({ enabled }: { enabled: boolean }) {
 
   return (
     <EnableFeatureCard
-      title="Reply Zero"
+      title="EmailAI"
       description={
         <>
           Your inbox is filled with emails that don't need your attention.
           <br />
-          Reply Zero only shows you the ones that do.
+          EmailAI only shows you the ones that do.
         </>
       }
       extraDescription={
@@ -57,12 +57,12 @@ export function EnableReplyTracker({ enabled }: { enabled: boolean }) {
       }
       imageSrc="/images/illustrations/communication.svg"
       imageAlt="Reply tracking"
-      buttonText={enabled ? "Got it!" : "Enable Reply Zero"}
+      buttonText={enabled ? "Got it!" : "Enable EmailAI"}
       onEnable={async () => {
-        markOnboardingAsCompleted(REPLY_ZERO_ONBOARDING_COOKIE);
+        markOnboardingAsCompleted(REPLY_AI_ONBOARDING_COOKIE);
 
         if (enabled) {
-          router.push(prefixPath(emailAccountId, "/reply-zero"));
+          router.push(prefixPath(emailAccountId, "/reply-ai"));
           return;
         }
 
@@ -70,13 +70,13 @@ export function EnableReplyTracker({ enabled }: { enabled: boolean }) {
 
         if (result?.serverError) {
           toastError({
-            title: "Error enabling Reply Zero",
+            title: "Error enabling ReplyAI",
             description: result.serverError,
           });
         } else {
           toastSuccess({
-            title: "Reply Zero enabled",
-            description: "We've enabled Reply Zero for you!",
+            title: "ReplyAI enabled",
+            description: "We've enabled ReplyAI for you!",
           });
         }
 
@@ -84,7 +84,7 @@ export function EnableReplyTracker({ enabled }: { enabled: boolean }) {
           async () => {
             await processPreviousSentEmailsAction(emailAccountId);
 
-            router.push(prefixPath(emailAccountId, "/reply-zero?enabled=true"));
+            router.push(prefixPath(emailAccountId, "/reply-ai?enabled=true"));
           },
           {
             loading:

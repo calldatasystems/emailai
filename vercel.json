@@ -1,5 +1,6 @@
 {
-  "buildCommand": "cd ../.. && turbo run build --filter={apps/web}...",
-  "installCommand": "pnpm install",
-  "ignoreCommand": ""
+  "buildCommand": "cd apps/web && pnpm build",
+  "installCommand": "pnpm install --shamefully-hoist",
+  "outputDirectory": "apps/web/.next",
+  "framework": "nextjs"
 }

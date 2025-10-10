@@ -32,6 +32,7 @@ export async function processHistoryForUser(
       email: true,
       userId: true,
       about: true,
+      organizationId: true,
       lastSyncedHistoryId: true,
       coldEmailBlocker: true,
       coldEmailPrompt: true,

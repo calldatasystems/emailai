@@ -18,6 +18,12 @@ export async function sanityFetch<QueryResponse>({
   params?: QueryParams;
   tags?: string[];
 }): Promise<QueryResponse> {
+  if (!client) {
+    throw new Error(
+      "Sanity client is not configured. Please set NEXT_PUBLIC_SANITY_PROJECT_ID.",
+    );
+  }
+
   const isDraftMode = (await draftMode()).isEnabled;
   if (isDraftMode && !token) {
     throw new Error(

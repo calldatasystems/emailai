@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # EmailAI - One-Command Setup Script
-# Usage: ./scripts/setup.sh [--production]
+# Usage: ./scripts/setup.sh [--production] [--vercel]
 
 set -e
 
@@ -14,12 +14,27 @@ NC='\033[0m' # No Color
 
 # Determine environment
 ENVIRONMENT="development"
-if [[ "$1" == "--production" ]]; then
-    ENVIRONMENT="production"
-fi
+DEPLOY_TARGET="local"
+
+# Parse arguments
+for arg in "$@"; do
+    case $arg in
+        --production)
+            ENVIRONMENT="production"
+            ;;
+        --vercel)
+            DEPLOY_TARGET="vercel"
+            ENVIRONMENT="production"
+            ;;
+        *)
+            ;;
+    esac
+done
 
 echo -e "${BLUE}╔════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║   EmailAI Setup Script ($ENVIRONMENT)   ║${NC}"
+echo -e "${BLUE}║   EmailAI Setup Script                 ║${NC}"
+echo -e "${BLUE}║   Environment: $ENVIRONMENT            ║${NC}"
+echo -e "${BLUE}║   Target: $DEPLOY_TARGET               ║${NC}"
 echo -e "${BLUE}╚════════════════════════════════════════╝${NC}"
 echo ""
 
@@ -178,6 +193,140 @@ prompt_with_default() {
     fi
 }
 
+# Function to check/install Vercel CLI
+setup_vercel_cli() {
+    if command_exists vercel; then
+        print_success "Vercel CLI already installed"
+        return 0
+    fi
+
+    print_status "Installing Vercel CLI..."
+    npm install -g vercel
+    print_success "Vercel CLI installed"
+}
+
+# Function to configure cloud database for Vercel
+setup_cloud_database() {
+    print_status "Setting up cloud database..."
+    echo ""
+    echo -e "${GREEN}━━━ Database Configuration (Cloud) ━━━${NC}"
+    echo ""
+    echo "For Vercel deployment, you need a cloud PostgreSQL database."
+    echo ""
+    echo "Recommended options:"
+    echo "  1. Supabase (https://supabase.com) - Free tier available"
+    echo "  2. Neon (https://neon.tech) - Free tier available"
+    echo "  3. Railway (https://railway.app) - Pay as you go"
+    echo "  4. I already have a database"
+    echo ""
+
+    read -p "Choose option (1-4): " db_choice
+
+    case $db_choice in
+        1)
+            echo ""
+            echo "Setting up with Supabase:"
+            echo "  1. Go to https://supabase.com and create a project"
+            echo "  2. Wait for database to provision (~2 minutes)"
+            echo "  3. Go to Project Settings → Database → Connection String"
+            echo ""
+            echo "  4. For DATABASE_URL:"
+            echo "     - Mode: Transaction"
+            echo "     - Port: 6543"
+            echo "     - Copy the 'Transaction pooler' connection string"
+            echo ""
+            read -p "Press Enter when ready to continue..."
+            echo ""
+            read -p "Database URL (Transaction Pooler - port 6543): " DATABASE_URL
+            echo ""
+            echo "  5. For DIRECT_URL:"
+            echo "     - Mode: Session"
+            echo "     - Port: 5432"
+            echo "     - Copy the 'Direct connection' string"
+            echo ""
+            read -p "Direct URL (Direct Connection - port 5432): " DIRECT_URL
+            ;;
+        2)
+            echo ""
+            echo "Setting up with Neon:"
+            echo "  1. Go to https://neon.tech and create a project"
+            echo "  2. Copy the connection string"
+            echo ""
+            read -p "Press Enter when ready to continue..."
+            echo ""
+            read -p "Database URL: " DATABASE_URL
+            DIRECT_URL="$DATABASE_URL"
+            ;;
+        3)
+            echo ""
+            echo "Setting up with Railway:"
+            echo "  1. Go to https://railway.app and create a PostgreSQL database"
+            echo "  2. Copy the connection string"
+            echo ""
+            read -p "Press Enter when ready to continue..."
+            echo ""
+            read -p "Database URL: " DATABASE_URL
+            DIRECT_URL="$DATABASE_URL"
+            ;;
+        4)
+            echo ""
+            read -p "Database URL: " DATABASE_URL
+            read -p "Direct URL (or press Enter for same as above): " DIRECT_URL
+            DIRECT_URL="${DIRECT_URL:-$DATABASE_URL}"
+            ;;
+        *)
+            print_error "Invalid option"
+            exit 1
+            ;;
+    esac
+
+    export DATABASE_URL
+    export DIRECT_URL
+
+    print_success "Database configured"
+}
+
+# Function to setup cloud Redis for Vercel
+setup_cloud_redis() {
+    print_status "Setting up Redis..."
+    echo ""
+    echo -e "${GREEN}━━━ Redis Configuration (Optional) ━━━${NC}"
+    echo ""
+    echo "Redis is optional but recommended for better performance."
+    echo ""
+    echo "Options:"
+    echo "  1. Upstash Redis (https://upstash.com) - Free tier available"
+    echo "  2. Skip Redis for now"
+    echo ""
+
+    read -p "Choose option (1-2): " redis_choice
+
+    case $redis_choice in
+        1)
+            echo ""
+            echo "Setting up with Upstash:"
+            echo "  1. Go to https://upstash.com and create a Redis database"
+            echo "  2. Choose region closest to your Vercel deployment"
+            echo "  3. Copy the REST URL and REST Token"
+            echo ""
+            read -p "Press Enter when ready to continue..."
+            echo ""
+            read -p "Upstash REST URL: " UPSTASH_REDIS_REST_URL
+            read -p "Upstash REST Token: " UPSTASH_REDIS_REST_TOKEN
+            export UPSTASH_REDIS_REST_URL
+            export UPSTASH_REDIS_REST_TOKEN
+            print_success "Redis configured"
+            ;;
+        2)
+            print_warning "Skipping Redis - performance may be reduced"
+            ;;
+        *)
+            print_error "Invalid option"
+            exit 1
+            ;;
+    esac
+}
+
 # Function to setup environment variables
 setup_env_file() {
     print_status "Setting up environment variables..."
@@ -238,8 +387,8 @@ setup_env_file() {
     read -p "Do you have Google OAuth credentials ready? (y/N) " -n 1 -r
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        GOOGLE_CLIENT_ID=$(prompt_with_default "Google Client ID" "")
-        GOOGLE_CLIENT_SECRET=$(prompt_with_default "Google Client Secret" "" true)
+        read -p "Google Client ID: " GOOGLE_CLIENT_ID
+        read -p "Google Client Secret: " GOOGLE_CLIENT_SECRET
     else
         print_warning "Skipping Google OAuth for now. You'll need to add this later!"
         print_warning "The app won't work without Google OAuth credentials."
@@ -273,9 +422,9 @@ setup_env_file() {
         echo "  3. Copy the Secret key and Publishable key"
         echo "  4. Set up webhook endpoint: ${NEXTAUTH_URL}/api/stripe/webhook"
         echo ""
-        STRIPE_SECRET_KEY=$(prompt_with_default "Stripe Secret Key" "sk_test_..." true)
-        STRIPE_PUBLISHABLE_KEY=$(prompt_with_default "Stripe Publishable Key" "pk_test_...")
-        STRIPE_WEBHOOK_SECRET=$(prompt_with_default "Stripe Webhook Secret" "whsec_..." true)
+        read -p "Stripe Secret Key (e.g., sk_test_...): " STRIPE_SECRET_KEY
+        read -p "Stripe Publishable Key (e.g., pk_test_...): " STRIPE_PUBLISHABLE_KEY
+        read -p "Stripe Webhook Secret (e.g., whsec_...): " STRIPE_WEBHOOK_SECRET
     elif [ "$payment_choice" = "2" ]; then
         echo ""
         echo "To get LemonSqueezy credentials:"
@@ -283,9 +432,9 @@ setup_env_file() {
         echo "  2. Go to Settings → API"
         echo "  3. Create a new API key"
         echo ""
-        LEMON_SQUEEZY_API_KEY=$(prompt_with_default "LemonSqueezy API Key" "" true)
-        LEMON_SQUEEZY_STORE_ID=$(prompt_with_default "LemonSqueezy Store ID" "")
-        LEMON_SQUEEZY_WEBHOOK_SECRET=$(prompt_with_default "LemonSqueezy Webhook Secret" "" true)
+        read -p "LemonSqueezy API Key: " LEMON_SQUEEZY_API_KEY
+        read -p "LemonSqueezy Store ID: " LEMON_SQUEEZY_STORE_ID
+        read -p "LemonSqueezy Webhook Secret: " LEMON_SQUEEZY_WEBHOOK_SECRET
     fi
     echo ""
 
@@ -308,9 +457,151 @@ setup_env_file() {
         echo "  2. Go to API Keys and create a new key"
         echo "  3. Verify your sending domain (optional for testing)"
         echo ""
-        RESEND_API_KEY=$(prompt_with_default "Resend API Key" "re_..." true)
-        RESEND_FROM_EMAIL=$(prompt_with_default "From Email Address" "noreply@${NEXTAUTH_URL#*://}")
+        read -p "Resend API Key (e.g., re_...): " RESEND_API_KEY
+        read -p "From Email Address (default: noreply@${NEXTAUTH_URL#*://}): " RESEND_FROM_EMAIL
+        RESEND_FROM_EMAIL="${RESEND_FROM_EMAIL:-noreply@${NEXTAUTH_URL#*://}}"
     fi
+    echo ""
+
+    # AI Provider Configuration
+    echo -e "${GREEN}━━━ AI Provider (Required for AI Features) ━━━${NC}"
+    echo ""
+    echo "Choose an AI provider for email automation and AI features:"
+    echo "  1. Ollama (local or self-hosted, free, most private)"
+    echo "  2. Groq (cloud API, fastest and cheapest)"
+    echo "  3. OpenAI (cloud API, GPT-4)"
+    echo "  4. Anthropic (cloud API, Claude)"
+    echo "  5. Google Gemini (cloud API)"
+    echo "  6. Skip for now (AI features will be disabled)"
+    echo ""
+    read -p "Choice (1/2/3/4/5/6): " ai_choice
+
+    DEFAULT_LLM_PROVIDER=""
+    OLLAMA_BASE_URL=""
+    NEXT_PUBLIC_OLLAMA_MODEL=""
+    OPENAI_API_KEY=""
+    ANTHROPIC_API_KEY=""
+    GROQ_API_KEY=""
+    GOOGLE_AI_API_KEY=""
+
+    case "$ai_choice" in
+        1)
+            echo ""
+            echo "Ollama Setup:"
+            echo ""
+            echo "Option 1: Local Ollama (for development)"
+            echo "  - Install Ollama: https://ollama.com/download"
+            echo "  - Run: ollama pull llama3.3:70b"
+            echo "  - Use URL: http://localhost:11434/api"
+            echo ""
+            echo "Option 2: Vast.ai GPU Server (for production)"
+            echo "  - Rent GPU: https://cloud.vast.ai/"
+            echo "  - Deploy Ollama: cd ollama-server/scripts && sudo bash setup.sh prod"
+            echo "  - Use URL: https://ai.calldata.app/api or http://ssh5.vast.ai:PORT/api"
+            echo ""
+            echo "Option 3: Self-hosted Server"
+            echo "  - Install Ollama on your server"
+            echo "  - Use URL: https://your-server.com/api"
+            echo ""
+
+            DEFAULT_LLM_PROVIDER="ollama"
+            read -p "Ollama Base URL (default: http://localhost:11434/api): " OLLAMA_BASE_URL
+            OLLAMA_BASE_URL="${OLLAMA_BASE_URL:-http://localhost:11434/api}"
+            read -p "Ollama Model (default: llama3.3:70b): " NEXT_PUBLIC_OLLAMA_MODEL
+            NEXT_PUBLIC_OLLAMA_MODEL="${NEXT_PUBLIC_OLLAMA_MODEL:-llama3.3:70b}"
+
+            echo ""
+            print_success "Ollama configured: $OLLAMA_BASE_URL"
+            ;;
+        2)
+            echo ""
+            echo "Groq Setup (Fastest & Cheapest):"
+            echo "  1. Sign up at: https://console.groq.com/"
+            echo "  2. Go to API Keys and create a new key"
+            echo "  3. Free tier includes generous limits"
+            echo ""
+            DEFAULT_LLM_PROVIDER="groq"
+            read -p "Groq API Key (e.g., gsk_...): " GROQ_API_KEY
+            ;;
+        3)
+            echo ""
+            echo "OpenAI Setup:"
+            echo "  1. Sign up at: https://platform.openai.com/signup"
+            echo "  2. Go to API Keys and create a new key"
+            echo "  3. Add credits to your account"
+            echo ""
+            DEFAULT_LLM_PROVIDER="openai"
+            read -p "OpenAI API Key (e.g., sk-...): " OPENAI_API_KEY
+            ;;
+        4)
+            echo ""
+            echo "Anthropic Setup:"
+            echo "  1. Sign up at: https://console.anthropic.com/"
+            echo "  2. Go to API Keys and create a new key"
+            echo "  3. Add credits to your account"
+            echo ""
+            DEFAULT_LLM_PROVIDER="anthropic"
+            read -p "Anthropic API Key (e.g., sk-ant-...): " ANTHROPIC_API_KEY
+            ;;
+        5)
+            echo ""
+            echo "Google Gemini Setup:"
+            echo "  1. Go to: https://makersuite.google.com/app/apikey"
+            echo "  2. Create a new API key"
+            echo "  3. Free tier available"
+            echo ""
+            DEFAULT_LLM_PROVIDER="google"
+            read -p "Google AI API Key: " GOOGLE_AI_API_KEY
+            ;;
+        *)
+            print_warning "Skipping AI provider configuration"
+            print_warning "AI features will be disabled until you configure a provider"
+            ;;
+    esac
+    echo ""
+
+    # Redis Configuration (Optional but recommended)
+    echo -e "${GREEN}━━━ Redis Cache (Optional but Recommended) ━━━${NC}"
+    echo ""
+    echo "Redis is used for caching and rate limiting."
+    echo ""
+    echo "Options:"
+    echo "  1. Local Redis (for development)"
+    echo "  2. Upstash (managed Redis, free tier available)"
+    echo "  3. Skip for now"
+    echo ""
+    read -p "Choice (1/2/3): " redis_choice
+
+    REDIS_URL=""
+    UPSTASH_REDIS_REST_URL=""
+    UPSTASH_REDIS_REST_TOKEN=""
+
+    case "$redis_choice" in
+        1)
+            echo ""
+            echo "Local Redis:"
+            echo "  - Install Redis: https://redis.io/download"
+            echo "  - Or use Docker: docker run -d -p 6379:6379 redis"
+            echo "  - Default URL: redis://localhost:6379"
+            echo ""
+            read -p "Redis URL (default: redis://localhost:6379): " REDIS_URL
+            REDIS_URL="${REDIS_URL:-redis://localhost:6379}"
+            ;;
+        2)
+            echo ""
+            echo "Upstash Setup:"
+            echo "  1. Sign up at: https://upstash.com"
+            echo "  2. Create a new Redis database"
+            echo "  3. Copy the REST URL and Token"
+            echo ""
+            read -p "Upstash Redis REST URL (e.g., https://xxx.upstash.io): " UPSTASH_REDIS_REST_URL
+            read -p "Upstash Redis REST Token: " UPSTASH_REDIS_REST_TOKEN
+            ;;
+        *)
+            print_warning "Skipping Redis configuration"
+            print_warning "Caching and rate limiting will be disabled"
+            ;;
+    esac
     echo ""
 
     # Monitoring
@@ -333,7 +624,7 @@ setup_env_file() {
         read -p "Configure Sentry? (y/N) " -n 1 -r
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
-            SENTRY_DSN=$(prompt_with_default "Sentry DSN" "https://xxx@sentry.io/xxx")
+            read -p "Sentry DSN (e.g., https://xxx@sentry.io/xxx): " SENTRY_DSN
         fi
 
         echo ""
@@ -343,14 +634,16 @@ setup_env_file() {
         read -p "Configure PostHog? (y/N) " -n 1 -r
         echo
         if [[ $REPLY =~ ^[Yy]$ ]]; then
-            POSTHOG_KEY=$(prompt_with_default "PostHog Project API Key" "phc_...")
-            POSTHOG_HOST=$(prompt_with_default "PostHog Host" "https://app.posthog.com")
+            read -p "PostHog Project API Key (e.g., phc_...): " POSTHOG_KEY
+            read -p "PostHog Host (default: https://app.posthog.com): " POSTHOG_HOST
+            POSTHOG_HOST="${POSTHOG_HOST:-https://app.posthog.com}"
         fi
     fi
     echo ""
 
     # Additional Settings
-    LOG_LEVEL=$(prompt_with_default "Log level (debug/info/warn/error)" "info")
+    read -p "Log level (debug/info/warn/error, default: info): " LOG_LEVEL
+    LOG_LEVEL="${LOG_LEVEL:-info}"
 
     # Create env file
     print_status "Creating $ENV_FILE..."
@@ -414,6 +707,71 @@ RESEND_FROM_EMAIL="${RESEND_FROM_EMAIL}"
 EOF
     fi
 
+    # Add AI provider configuration
+    if [ -n "$DEFAULT_LLM_PROVIDER" ]; then
+        cat >> "$ENV_FILE" << EOF
+# ━━━ AI Provider Configuration ━━━
+DEFAULT_LLM_PROVIDER="${DEFAULT_LLM_PROVIDER}"
+
+EOF
+        if [ "$DEFAULT_LLM_PROVIDER" = "ollama" ]; then
+            cat >> "$ENV_FILE" << EOF
+# Ollama Configuration
+# Local: http://localhost:11434/api
+# Vast.ai: https://ai.calldata.app/api or http://ssh5.vast.ai:PORT/api
+OLLAMA_BASE_URL="${OLLAMA_BASE_URL}"
+NEXT_PUBLIC_OLLAMA_MODEL="${NEXT_PUBLIC_OLLAMA_MODEL}"
+
+EOF
+        elif [ "$DEFAULT_LLM_PROVIDER" = "openai" ]; then
+            cat >> "$ENV_FILE" << EOF
+# OpenAI Configuration
+OPENAI_API_KEY="${OPENAI_API_KEY}"
+
+EOF
+        elif [ "$DEFAULT_LLM_PROVIDER" = "anthropic" ]; then
+            cat >> "$ENV_FILE" << EOF
+# Anthropic Configuration
+ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY}"
+
+EOF
+        elif [ "$DEFAULT_LLM_PROVIDER" = "groq" ]; then
+            cat >> "$ENV_FILE" << EOF
+# Groq Configuration
+GROQ_API_KEY="${GROQ_API_KEY}"
+
+EOF
+        elif [ "$DEFAULT_LLM_PROVIDER" = "google" ]; then
+            cat >> "$ENV_FILE" << EOF
+# Google AI Configuration
+GOOGLE_AI_API_KEY="${GOOGLE_AI_API_KEY}"
+
+EOF
+        fi
+    fi
+
+    # Add Redis configuration
+    if [ -n "$REDIS_URL" ] || [ -n "$UPSTASH_REDIS_REST_URL" ]; then
+        cat >> "$ENV_FILE" << EOF
+# ━━━ Redis Cache ━━━
+EOF
+        if [ -n "$REDIS_URL" ]; then
+            cat >> "$ENV_FILE" << EOF
+# Local or self-hosted Redis
+REDIS_URL="${REDIS_URL}"
+
+EOF
+        fi
+        if [ -n "$UPSTASH_REDIS_REST_URL" ]; then
+            cat >> "$ENV_FILE" << EOF
+# Upstash Redis (managed)
+UPSTASH_REDIS_REST_URL="${UPSTASH_REDIS_REST_URL}"
+UPSTASH_REDIS_REST_TOKEN="${UPSTASH_REDIS_REST_TOKEN}"
+
+EOF
+        fi
+    fi
+
     # Add monitoring if provided
     if [ -n "$SENTRY_DSN" ] || [ -n "$POSTHOG_KEY" ]; then
         cat >> "$ENV_FILE" << EOF
@@ -447,16 +805,24 @@ LOG_LEVEL="${LOG_LEVEL}"
 NEXT_PUBLIC_ENABLE_ORGANIZATIONS="true"
 NEXT_PUBLIC_ENABLE_COLD_EMAIL_BLOCKER="true"
 
-# ━━━ Optional Services ━━━
-# Uncomment and configure as needed
+# ━━━ Internal Keys ━━━
+# Auto-generated internal API keys
+INTERNAL_API_KEY="$(openssl rand -hex 32)"
+API_KEY_SALT="$(openssl rand -hex 16)"
 
-# Redis (for caching and rate limiting)
-# REDIS_URL="redis://localhost:6379"
-# UPSTASH_REDIS_REST_URL="https://xxx.upstash.io"
-# UPSTASH_REDIS_REST_TOKEN="xxx"
+# ━━━ Additional Configuration ━━━
+# Uncomment and configure as needed:
 
-# Axiom (logging)
-# AXIOM_TOKEN="xxx"
+# Google Encryption (for storing OAuth tokens securely)
+# GOOGLE_ENCRYPT_SECRET="$(openssl rand -hex 32)"
+# GOOGLE_ENCRYPT_SALT="$(openssl rand -hex 16)"
+
+# Google PubSub (for real-time email notifications)
+# GOOGLE_PUBSUB_TOPIC_NAME="projects/YOUR_PROJECT/topics/emailai"
+# GOOGLE_PUBSUB_VERIFICATION_TOKEN="$(openssl rand -hex 32)"
+
+# Axiom (advanced logging)
+# AXIOM_TOKEN="xaat-xxx"
 # AXIOM_DATASET="${ENVIRONMENT}"
 
 # Disable Next.js telemetry
@@ -483,6 +849,33 @@ EOF
     if [ -z "$STRIPE_SECRET_KEY" ] && [ -z "$LEMON_SQUEEZY_API_KEY" ]; then
         print_warning "ℹ️  Payment provider not configured"
         print_warning "   Billing features will be disabled until you configure one."
+        echo ""
+    fi
+
+    if [ -z "$DEFAULT_LLM_PROVIDER" ]; then
+        print_warning "⚠️  AI Provider not configured!"
+        print_warning "   AI features (automation, smart replies, categorization) will NOT work."
+        print_warning "   To enable AI, choose one of these options in $ENV_FILE:"
+        print_warning ""
+        print_warning "   Option 1 - Ollama (Free, Private):"
+        print_warning "   DEFAULT_LLM_PROVIDER=ollama"
+        print_warning "   OLLAMA_BASE_URL=http://localhost:11434/api"
+        print_warning "   NEXT_PUBLIC_OLLAMA_MODEL=llama3.3:70b"
+        print_warning ""
+        print_warning "   Option 2 - Groq (Fast, Cheap Cloud):"
+        print_warning "   DEFAULT_LLM_PROVIDER=groq"
+        print_warning "   GROQ_API_KEY=your-key-from-console.groq.com"
+        print_warning ""
+        print_warning "   Option 3 - OpenAI:"
+        print_warning "   DEFAULT_LLM_PROVIDER=openai"
+        print_warning "   OPENAI_API_KEY=sk-..."
+        echo ""
+    fi
+
+    if [ -z "$REDIS_URL" ] && [ -z "$UPSTASH_REDIS_REST_URL" ]; then
+        print_warning "ℹ️  Redis not configured"
+        print_warning "   Caching and rate limiting will be disabled."
+        print_warning "   For better performance, consider adding Redis."
         echo ""
     fi
 }
@@ -625,6 +1018,99 @@ verify_setup() {
     return $CHECKS_FAILED
 }
 
+# Function to deploy to Vercel
+deploy_to_vercel() {
+    print_status "Deploying to Vercel..."
+    echo ""
+
+    cd apps/web
+
+    # Login to Vercel
+    print_status "Logging into Vercel..."
+    vercel login
+
+    # Link or create project
+    print_status "Linking to Vercel project..."
+    vercel link --yes
+
+    # Add environment variables to Vercel
+    print_status "Adding environment variables to Vercel..."
+    echo ""
+    echo "Adding environment variables (this may take a moment)..."
+
+    # Database
+    echo "$DATABASE_URL" | vercel env add DATABASE_URL production
+    echo "$DIRECT_URL" | vercel env add DIRECT_URL production
+
+    # Auth
+    echo "$NEXTAUTH_URL" | vercel env add NEXTAUTH_URL production
+    echo "$NEXTAUTH_SECRET" | vercel env add NEXTAUTH_SECRET production
+    echo "$GOOGLE_CLIENT_ID" | vercel env add GOOGLE_CLIENT_ID production
+    echo "$GOOGLE_CLIENT_SECRET" | vercel env add GOOGLE_CLIENT_SECRET production
+
+    # AI Provider
+    echo "$DEFAULT_LLM_PROVIDER" | vercel env add DEFAULT_LLM_PROVIDER production
+
+    if [ "$DEFAULT_LLM_PROVIDER" = "ollama" ]; then
+        echo "$OLLAMA_BASE_URL" | vercel env add OLLAMA_BASE_URL production
+        echo "$NEXT_PUBLIC_OLLAMA_MODEL" | vercel env add NEXT_PUBLIC_OLLAMA_MODEL production
+    elif [ "$DEFAULT_LLM_PROVIDER" = "openai" ]; then
+        echo "$OPENAI_API_KEY" | vercel env add OPENAI_API_KEY production
+    elif [ "$DEFAULT_LLM_PROVIDER" = "anthropic" ]; then
+        echo "$ANTHROPIC_API_KEY" | vercel env add ANTHROPIC_API_KEY production
+    elif [ "$DEFAULT_LLM_PROVIDER" = "groq" ]; then
+        echo "$GROQ_API_KEY" | vercel env add GROQ_API_KEY production
+    elif [ "$DEFAULT_LLM_PROVIDER" = "google" ]; then
+        echo "$GOOGLE_AI_API_KEY" | vercel env add GOOGLE_AI_API_KEY production
+    fi
+
+    # Redis (if configured)
+    if [ -n "$UPSTASH_REDIS_REST_URL" ]; then
+        echo "$UPSTASH_REDIS_REST_URL" | vercel env add UPSTASH_REDIS_REST_URL production
+        echo "$UPSTASH_REDIS_REST_TOKEN" | vercel env add UPSTASH_REDIS_REST_TOKEN production
+    fi
+
+    # App settings
+    echo "$NEXTAUTH_URL" | vercel env add NEXT_PUBLIC_BASE_URL production
+    echo "$NEXTAUTH_URL" | vercel env add NEXT_PUBLIC_CALL_BASE_URL production
+
+    # Internal API key
+    INTERNAL_API_KEY=$(openssl rand -base64 32)
+    echo "$INTERNAL_API_KEY" | vercel env add INTERNAL_API_KEY production
+
+    # Feature flags
+    echo "true" | vercel env add NEXT_PUBLIC_ENABLE_ORGANIZATIONS production
+    echo "true" | vercel env add NEXT_PUBLIC_ENABLE_COLD_EMAIL_BLOCKER production
+
+    # Disable optional services
+    echo "true" | vercel env add DISABLE_TINYBIRD production
+    echo "true" | vercel env add DISABLE_POSTHOG production
+
+    print_success "Environment variables added to Vercel"
+
+    # Run database migrations
+    print_status "Running database migrations..."
+    export DIRECT_URL
+    npx prisma migrate deploy
+
+    # Deploy to production
+    print_status "Deploying to production..."
+    echo ""
+    vercel --prod
+
+    cd ../..
+
+    print_success "Deployed to Vercel!"
+    echo ""
+    echo -e "${GREEN}Your application is now live!${NC}"
+    echo ""
+    echo "Next steps:"
+    echo "1. Update Google OAuth redirect URI with your Vercel URL"
+    echo "2. Visit your deployment URL to test"
+    echo "3. Sign in with Google and connect your Gmail"
+    echo ""
+}
+
 # Function to print next steps
 print_next_steps() {
     echo ""
@@ -642,14 +1128,19 @@ print_next_steps() {
     [[ "$ENVIRONMENT" == "production" ]] && ENV_FILE="apps/web/.env.production"
     echo "     $ENV_FILE"
     echo ""
-    echo "2. (Optional) Configure payment provider:"
+    echo "2. Configure AI Provider (if skipped):"
+    echo "   - Ollama (local): https://ollama.com/download"
+    echo "   - Groq (cloud, free): https://console.groq.com/"
+    echo "   - OpenAI: https://platform.openai.com/"
+    echo ""
+    echo "3. (Optional) Configure payment provider:"
     echo "   - Stripe: https://dashboard.stripe.com/apikeys"
     echo "   - LemonSqueezy: https://app.lemonsqueezy.com/settings/api"
     echo ""
-    echo "3. Start the development server:"
+    echo "4. Start the development server:"
     echo "   ${GREEN}npm run dev${NC}"
     echo ""
-    echo "4. Open in browser:"
+    echo "5. Open in browser:"
     echo "   ${BLUE}http://localhost:3000${NC}"
     echo ""
 
@@ -680,6 +1171,44 @@ print_next_steps() {
 
 # Main setup flow
 main() {
+    echo ""
+
+    # Vercel deployment flow
+    if [[ "$DEPLOY_TARGET" == "vercel" ]]; then
+        print_status "Setting up for Vercel deployment..."
+        echo ""
+
+        # Check Node.js
+        if ! check_node_version; then
+            print_warning "Node.js 18+ not found"
+            install_node
+        else
+            print_success "Node.js: $(node -v)"
+        fi
+
+        # Setup Vercel CLI
+        setup_vercel_cli
+
+        # Setup cloud database
+        setup_cloud_database
+
+        # Setup cloud Redis
+        setup_cloud_redis
+
+        # Setup environment variables
+        setup_env_file
+
+        # Install dependencies
+        install_dependencies
+
+        # Deploy to Vercel
+        deploy_to_vercel
+
+        return 0
+    fi
+
+    # Local/self-hosted deployment flow
+    print_status "Setting up for local/self-hosted deployment..."
     echo ""
 
     # Check prerequisites

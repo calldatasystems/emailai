@@ -15,7 +15,7 @@ const transferSchema = z.object({
 export const POST = withError(
   async (
     request: Request,
-    context: { params: Promise<{ emailAccountId: string }> },
+    context: { params: Promise<Record<string, string>> },
   ) => {
     const session = await auth();
     if (!session?.user.id) {

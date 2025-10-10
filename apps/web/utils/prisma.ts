@@ -14,6 +14,7 @@ const _prisma =
 if (env.NODE_ENV === "development") global.prisma = _prisma;
 
 export default _prisma;
+export const prisma = _prisma;
 
 export function isDuplicateError(error: unknown, key?: string) {
   const duplicateError =

@@ -1,4 +1,4 @@
-import { EnableReplyTracker } from "@/app/(app)/[emailAccountId]/reply-zero/EnableReplyTracker";
+import { EnableReplyTracker } from "@/app/(app)/[emailAccountId]/reply-ai/EnableReplyTracker";
 import prisma from "@/utils/prisma";
 import { ActionType } from "@prisma/client";
 

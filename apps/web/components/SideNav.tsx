@@ -78,8 +78,8 @@ export const useNavigation = () => {
         icon: SparklesIcon,
       },
       {
-        name: "Reply Zero",
-        href: prefixPath(emailAccountId, "/reply-zero"),
+        name: "ReplyAI",
+        href: prefixPath(emailAccountId, "/reply-ai"),
         icon: MessageCircleReplyIcon,
       },
       {

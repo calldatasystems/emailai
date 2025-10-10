@@ -5,7 +5,7 @@ alwaysApply: false
 ---
 # Reply Tracker
 
-Reply Tracker (also known as Reply Zero) lets the user which emails need a reply for them and those they're awaiting a reply on.
+Reply Tracker (also known as EmailAI) lets the user see which emails need a reply for them and those they're awaiting a reply on.
 It updates the labels for the thread automatically in Gmail.
 
 The database models and fields that are used for this feature:

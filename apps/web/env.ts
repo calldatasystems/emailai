@@ -2,7 +2,12 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
+// Skip validation for builds without all required environment variables
+const skipValidation =
+  !process.env.DATABASE_URL || !process.env.GOOGLE_ENCRYPT_SECRET;
+
 export const env = createEnv({
+  skipValidation,
   server: {
     NODE_ENV: z.enum(["development", "production", "test"]),
     DATABASE_URL: z.string().url(),
@@ -38,7 +43,7 @@ export const env = createEnv({
     QSTASH_TOKEN: z.string().optional(),
     QSTASH_CURRENT_SIGNING_KEY: z.string().optional(),
     QSTASH_NEXT_SIGNING_KEY: z.string().optional(),
-    GOOGLE_PUBSUB_TOPIC_NAME: z.string().min(1),
+    GOOGLE_PUBSUB_TOPIC_NAME: z.string().optional(),
     GOOGLE_PUBSUB_VERIFICATION_TOKEN: z.string().optional(),
     SENTRY_AUTH_TOKEN: z.string().optional(),
     SENTRY_ORGANIZATION: z.string().optional(),

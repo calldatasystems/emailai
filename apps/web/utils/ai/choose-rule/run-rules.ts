@@ -125,6 +125,7 @@ async function executeMatchedRule(
       emailAccountId: emailAccount.id,
       executedRule,
       message,
+      emailAccount,
     });
   }
 

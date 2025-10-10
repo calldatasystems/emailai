@@ -18,7 +18,7 @@ const shareSchema = z.object({
 export const POST = withError(
   async (
     request: Request,
-    context: { params: Promise<{ emailAccountId: string }> },
+    context: { params: Promise<Record<string, string>> },
   ) => {
     const session = await auth();
     if (!session?.user.id) {
@@ -50,7 +50,7 @@ export const POST = withError(
 export const DELETE = withError(
   async (
     _request: Request,
-    context: { params: Promise<{ emailAccountId: string }> },
+    context: { params: Promise<Record<string, string>> },
   ) => {
     const session = await auth();
     if (!session?.user.id) {

@@ -35,7 +35,7 @@
 
 **One-command setup:**
 ```bash
-git clone https://github.com/your-org/emailai.git
+git clone https://github.com/calldatasystems/emailai.git
 cd emailai
 bash scripts/setup.sh  # Interactive setup wizard for local development
 ```

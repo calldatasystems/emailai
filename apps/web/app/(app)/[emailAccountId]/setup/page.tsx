@@ -12,7 +12,7 @@ import prisma from "@/utils/prisma";
 import { PageHeading, SectionDescription } from "@/components/Typography";
 import { LoadStats } from "@/providers/StatLoaderProvider";
 import { Card } from "@/components/ui/card";
-import { REPLY_ZERO_ONBOARDING_COOKIE } from "@/utils/cookies";
+import { REPLY_AI_ONBOARDING_COOKIE } from "@/utils/cookies";
 import { prefixPath } from "@/utils/path";
 
 export default async function SetupPage(props: {
@@ -38,7 +38,7 @@ export default async function SetupPage(props: {
   const isBulkUnsubscribeConfigured = emailAccount.newsletters.length > 0;
   const cookieStore = await cookies();
   const isReplyTrackerConfigured =
-    cookieStore.get(REPLY_ZERO_ONBOARDING_COOKIE)?.value === "true";
+    cookieStore.get(REPLY_AI_ONBOARDING_COOKIE)?.value === "true";
 
   return (
     <>
@@ -85,11 +85,11 @@ function FeatureCard({
 
 const features = [
   {
-    href: "/reply-zero",
+    href: "/reply-ai",
     icon: MailIcon,
     iconBg: "bg-blue-100 dark:bg-blue-900/50",
     iconColor: "text-blue-600 dark:text-blue-400",
-    title: "Reply Zero",
+    title: "ReplyAI",
     description:
       "Track emails needing replies & follow-ups. Get AI-drafted responses",
   },
@@ -305,7 +305,7 @@ function Checklist({
       />
 
       <StepItem
-        href={prefixPath(emailAccountId, "/reply-zero")}
+        href={prefixPath(emailAccountId, "/reply-ai")}
         icon={<MailIcon size={20} />}
         iconBg="bg-blue-100 dark:bg-blue-900/50"
         iconColor="text-blue-500 dark:text-blue-400"

@@ -10,7 +10,7 @@ import { withError } from "@/utils/middleware";
 export const GET = withError(
   async (
     _request: Request,
-    context: { params: Promise<{ organizationId: string }> },
+    context: { params: Promise<Record<string, string>> },
   ) => {
     const session = await auth();
     if (!session?.user.id) {
@@ -40,7 +40,7 @@ export const GET = withError(
     }
 
     // Return members with their user info and role
-    const members = organization.members.map((member) => ({
+    const members = organization.members.map((member: any) => ({
       id: member.id,
       name: member.user.name,
       email: member.user.email,

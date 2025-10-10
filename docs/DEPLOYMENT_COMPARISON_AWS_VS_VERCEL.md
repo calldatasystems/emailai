@@ -1091,7 +1091,7 @@ ssh -i your-key.pem ubuntu@ec2-xxx.compute.amazonaws.com
 
 # Deploy Ollama
 cd /home/ubuntu
-git clone https://github.com/your-org/emailai.git
+git clone https://github.com/calldatasystems/emailai.git
 cd emailai/ollama-server/scripts
 sudo bash setup.sh prod
 

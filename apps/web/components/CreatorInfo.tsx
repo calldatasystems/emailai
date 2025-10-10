@@ -30,9 +30,9 @@ export function CreatorInfo({
       <span className="text-gray-500">{label}:</span>
       <div className="flex items-center gap-1.5">
         <ProfileImage
-          imageUrl={creator.image}
-          name={displayName}
-          size="xs"
+          image={creator.image}
+          label={displayName}
+          size={24}
         />
         <span className="font-medium">{displayName}</span>
       </div>

@@ -39,10 +39,7 @@ async function migrateBillingToOrgs(options: MigrationOptions) {
     where: {
       id: userId || undefined,
       premium: {
-        some: {
-          // Premium exists
-          id: { not: undefined },
-        },
+        isNot: null,
       },
     },
     include: {
@@ -51,7 +48,7 @@ async function migrateBillingToOrgs(options: MigrationOptions) {
           organizations: true, // Check if already linked
         },
       },
-      organizationMemberships: {
+      organizationMembers: {
         include: {
           organization: true,
         },
@@ -69,31 +66,34 @@ async function migrateBillingToOrgs(options: MigrationOptions) {
   let errorCount = 0;
 
   for (const user of usersWithPremium) {
-    const userPremiums = user.premium;
+    const premium = user.premium;
 
-    for (const premium of userPremiums) {
-      // Skip if already linked to an organization
-      if (premium.organizations.length > 0) {
-        logger.info("Premium already linked to organization, skipping", {
-          userId: user.id,
-          premiumId: premium.id,
-          linkedOrgs: premium.organizations.length,
-        });
-        skippedCount++;
-        continue;
-      }
+    if (!premium) {
+      continue;
+    }
 
-      // Get user's default organization (first created, usually personal)
-      const defaultOrg = user.organizationMemberships[0]?.organization;
+    // Skip if already linked to an organization
+    if (premium.organizations.length > 0) {
+      logger.info("Premium already linked to organization, skipping", {
+        userId: user.id,
+        premiumId: premium.id,
+        linkedOrgs: premium.organizations.length,
+      });
+      skippedCount++;
+      continue;
+    }
 
-      if (!defaultOrg) {
-        logger.error("User has no organization, cannot migrate", {
-          userId: user.id,
-          email: user.email,
-        });
-        errorCount++;
-        continue;
-      }
+    // Get user's default organization (first created, usually personal)
+    const defaultOrg = user.organizationMembers[0]?.organization;
+
+    if (!defaultOrg) {
+      logger.error("User has no organization, cannot migrate", {
+        userId: user.id,
+        email: user.email,
+      });
+      errorCount++;
+      continue;
+    }
 
       logger.info("Migrating Premium to organization", {
         userId: user.id,
@@ -136,7 +136,6 @@ async function migrateBillingToOrgs(options: MigrationOptions) {
         });
         migratedCount++;
       }
-    }
   }
 
   logger.info("Migration complete", {

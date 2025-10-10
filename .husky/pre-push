@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Skip build check if SKIP_BUILD_CHECK=1 is set
+# Usage: SKIP_BUILD_CHECK=1 git push
+if [ "$SKIP_BUILD_CHECK" = "1" ]; then
+  echo "Skipping build check (SKIP_BUILD_CHECK=1)"
+  exit 0
+fi
+
+echo "Running build before push..."
+echo "Tip: Set SKIP_BUILD_CHECK=1 to skip this check"
+pnpm build

@@ -72,10 +72,10 @@ export async function updateOrganizationSeats({
   // Sync with payment provider
   if (premium.stripeSubscriptionItemId) {
     try {
-      await updateStripeSubscriptionItemQuantity(
-        premium.stripeSubscriptionItemId,
-        usedSeats,
-      );
+      await updateStripeSubscriptionItemQuantity({
+        subscriptionItemId: premium.stripeSubscriptionItemId,
+        quantity: usedSeats,
+      });
       logger.info("Updated Stripe subscription", {
         organizationId,
         seats: usedSeats,
@@ -89,10 +89,10 @@ export async function updateOrganizationSeats({
     }
   } else if (premium.lemonSqueezySubscriptionItemId) {
     try {
-      await updateSubscriptionItemQuantity(
-        premium.lemonSqueezySubscriptionItemId,
-        usedSeats,
-      );
+      await updateSubscriptionItemQuantity({
+        id: premium.lemonSqueezySubscriptionItemId,
+        quantity: usedSeats,
+      });
       logger.info("Updated LemonSqueezy subscription", {
         organizationId,
         seats: usedSeats,
@@ -167,7 +167,7 @@ export async function getOrganizationBilling(organizationId: string) {
           maxSeats: true,
           usedSeats: true,
           lemonSqueezyRenewsAt: true,
-          lemonSqueezySubscriptionStatus: true,
+          lemonSubscriptionStatus: true,
           stripeRenewsAt: true,
           stripeSubscriptionStatus: true,
           stripeCancelAtPeriodEnd: true,
@@ -187,7 +187,7 @@ export async function getOrganizationBilling(organizationId: string) {
   }
 
   const hasStripe = !!organization.premium?.stripeSubscriptionStatus;
-  const hasLemon = !!organization.premium?.lemonSqueezySubscriptionStatus;
+  const hasLemon = !!organization.premium?.lemonSubscriptionStatus;
 
   return {
     organizationId: organization.id,
@@ -208,7 +208,7 @@ export async function getOrganizationBilling(organizationId: string) {
     subscription: {
       status: hasStripe
         ? organization.premium?.stripeSubscriptionStatus
-        : organization.premium?.lemonSqueezySubscriptionStatus,
+        : organization.premium?.lemonSubscriptionStatus,
       renewsAt: hasStripe
         ? organization.premium?.stripeRenewsAt
         : organization.premium?.lemonSqueezyRenewsAt,

@@ -42,7 +42,7 @@ ssh root@ssh5.vast.ai -p 12345
 
 # 2. Clone EmailAI repository
 cd /root
-git clone https://github.com/your-org/emailai.git
+git clone https://github.com/calldatasystems/emailai.git
 cd emailai/ollama-server/scripts
 
 # 3. Run setup script

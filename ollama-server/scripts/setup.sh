@@ -121,6 +121,66 @@ else
 fi
 
 #######################################################################
+# Step 0b: Install Node.js and Claude Code
+#######################################################################
+
+info "Installing Node.js and Claude Code..."
+
+# Check if Node.js is already installed
+if command -v node &> /dev/null; then
+    NODE_VERSION=$(node --version | sed 's/v//')
+    NODE_MAJOR=$(echo $NODE_VERSION | cut -d. -f1)
+
+    if [ "$NODE_MAJOR" -ge 18 ]; then
+        success "Node.js $NODE_VERSION already installed"
+    else
+        warn "Node.js version too old ($NODE_VERSION). Installing Node.js 18..."
+        if [ "$PKG_MANAGER" = "apt-get" ]; then
+            curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+            apt-get install -y nodejs
+        elif [ "$PKG_MANAGER" = "yum" ]; then
+            curl -fsSL https://rpm.nodesource.com/setup_18.x | bash -
+            yum install -y nodejs
+        fi
+    fi
+else
+    info "Installing Node.js 18..."
+    if [ "$PKG_MANAGER" = "apt-get" ]; then
+        curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+        apt-get install -y nodejs
+    elif [ "$PKG_MANAGER" = "yum" ]; then
+        curl -fsSL https://rpm.nodesource.com/setup_18.x | bash -
+        yum install -y nodejs
+    elif [ "$PKG_MANAGER" = "apk" ]; then
+        apk add nodejs npm
+    else
+        warn "Could not install Node.js automatically. Please install manually."
+    fi
+
+    if command -v node &> /dev/null; then
+        success "Node.js $(node --version) installed"
+    else
+        warn "Node.js installation may have failed"
+    fi
+fi
+
+# Install Claude Code globally
+if command -v claude &> /dev/null; then
+    CLAUDE_VERSION=$(claude --version 2>&1 | head -1 || echo "unknown")
+    success "Claude Code already installed ($CLAUDE_VERSION)"
+else
+    info "Installing Claude Code..."
+    npm install -g @anthropic-ai/claude-code 2>&1 | grep -v "^npm WARN" || true
+
+    if command -v claude &> /dev/null; then
+        success "Claude Code installed successfully"
+        info "Start with: claude"
+    else
+        warn "Claude Code installation may have failed. Try manually: npm install -g @anthropic-ai/claude-code"
+    fi
+fi
+
+#######################################################################
 # Step 1: Check System Requirements
 #######################################################################
 
@@ -212,14 +272,25 @@ fi
 # Check if systemd is available
 if command -v systemctl &> /dev/null && [ "$RUNNING_IN_CONTAINER" = false ]; then
     info "Using systemd to manage Ollama service..."
+
+    # Configure systemd service to bind to 0.0.0.0
+    mkdir -p /etc/systemd/system/ollama.service.d
+    cat > /etc/systemd/system/ollama.service.d/override.conf << EOF
+[Service]
+Environment="OLLAMA_HOST=0.0.0.0:11434"
+EOF
+
+    # Reload systemd and restart service
+    systemctl daemon-reload
     systemctl enable ollama 2>/dev/null || true
-    systemctl start ollama 2>/dev/null || true
+    systemctl restart ollama 2>/dev/null || true
+    sleep 3
 
     if systemctl is-active --quiet ollama; then
-        success "Ollama service is running via systemd"
+        success "Ollama service is running via systemd (bound to 0.0.0.0:11434)"
     else
         warn "Could not start Ollama via systemd. Starting manually..."
-        ollama serve > /var/log/ollama.log 2>&1 &
+        OLLAMA_HOST=0.0.0.0:11434 ollama serve > /var/log/ollama.log 2>&1 &
         sleep 3
     fi
 else
@@ -281,6 +352,47 @@ while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
         fi
     fi
 done
+
+# Verify IPv4 binding
+info "Verifying IPv4 binding..."
+if command -v netstat &> /dev/null; then
+    IPV4_BINDING=$(netstat -tlnp 2>/dev/null | grep 11434 | grep -E '0.0.0.0|127.0.0.1')
+    IPV6_ONLY=$(netstat -tlnp 2>/dev/null | grep 11434 | grep ':::' | grep -v '0.0.0.0')
+elif command -v ss &> /dev/null; then
+    IPV4_BINDING=$(ss -tlnp 2>/dev/null | grep 11434 | grep -E '0.0.0.0|127.0.0.1')
+    IPV6_ONLY=$(ss -tlnp 2>/dev/null | grep 11434 | grep '::' | grep -v '0.0.0.0')
+else
+    warn "Cannot verify binding (netstat/ss not available)"
+    IPV4_BINDING="unknown"
+fi
+
+if [ -n "$IPV4_BINDING" ] && echo "$IPV4_BINDING" | grep -q '0.0.0.0'; then
+    success "Ollama is bound to IPv4 (0.0.0.0:11434) - accessible remotely"
+elif [ -n "$IPV6_ONLY" ] && [ -z "$IPV4_BINDING" ]; then
+    error "Ollama is only bound to IPv6 (:::11434). This may not be accessible remotely. Restarting with correct binding..."
+
+    # Kill and restart with correct binding
+    pkill ollama
+    sleep 2
+
+    if [ "$RUNNING_IN_CONTAINER" = true ]; then
+        screen -S ollama -X quit 2>/dev/null || true
+        screen -dmS ollama bash -c 'OLLAMA_HOST=0.0.0.0:11434 ollama serve'
+        sleep 5
+    else
+        systemctl restart ollama
+        sleep 3
+    fi
+
+    # Check again
+    if netstat -tlnp 2>/dev/null | grep 11434 | grep -q '0.0.0.0' || ss -tlnp 2>/dev/null | grep 11434 | grep -q '0.0.0.0'; then
+        success "Ollama now bound to IPv4 (0.0.0.0:11434)"
+    else
+        warn "Still having issues with IPv4 binding. Check: netstat -tlnp | grep 11434"
+    fi
+else
+    info "Ollama binding: $IPV4_BINDING"
+fi
 
 #######################################################################
 # Step 4: Pull AI Models
@@ -478,10 +590,22 @@ else
 fi
 
 echo ""
+info "Claude Code (AI Assistant):"
+if command -v claude &> /dev/null; then
+    echo "  ✓ Claude Code is installed"
+    echo "  Start with: claude"
+    echo "  Or in screen: screen -S claude && claude"
+else
+    echo "  ✗ Claude Code not installed (optional)"
+    echo "  Install manually: npm install -g @anthropic-ai/claude-code"
+fi
+
+echo ""
 info "Next Steps:"
 echo "  1. Copy the environment variables above to your EmailAI .env file"
 echo "  2. Restart EmailAI application"
 echo "  3. Test the connection from EmailAI"
+echo "  4. (Optional) Start Claude Code for interactive assistance: claude"
 
 if [ "$RUNNING_IN_CONTAINER" = true ]; then
     echo ""

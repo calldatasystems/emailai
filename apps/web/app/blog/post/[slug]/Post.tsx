@@ -15,10 +15,10 @@ import { Prose } from "@/app/blog/components/Prose";
 import { TableOfContents } from "@/app/blog/components/TableOfContents";
 import { Card, CardContent } from "@/components/ui/card";
 import { extractTextFromPortableTextBlock, slugify } from "@/utils/text";
-import { Tryemailai } from "@/app/blog/components/Tryemailai";
+import { Tryemailai } from "@/app/blog/components/TryInboxZero";
 import { ReadMore } from "@/app/blog/components/ReadMore";
 
-const builder = imageUrlBuilder(client);
+const builder = client ? imageUrlBuilder(client) : null;
 
 export function Post({ post }: { post: PostType }) {
   return (
@@ -30,7 +30,7 @@ export function Post({ post }: { post: PostType }) {
               <Prose>
                 <h1>{post.title}</h1>
                 <p>{post.description}</p>
-                {post.mainImage ? (
+                {post.mainImage && builder ? (
                   <div className="-mx-10 my-8">
                     <Image
                       src={builder
@@ -55,6 +55,8 @@ export function Post({ post }: { post: PostType }) {
                       },
                       types: {
                         image: ({ value }) => {
+                          if (!builder) return null;
+
                           // https://www.sanity.io/answers/how-to-get-the-width-height-or-dimensions-of-uploaded-image-with-sanity-and-next-js-to-prevent-cls
                           const pattern = /^image-([a-f\d]+)-(\d+x\d+)-(\w+)$/;
 
@@ -124,7 +126,7 @@ export function Post({ post }: { post: PostType }) {
               <CardContent className="pt-6">
                 <h3 className="mb-2 text-lg font-semibold">Written by</h3>
                 <div className="flex items-center">
-                  {post.authorImage && (
+                  {post.authorImage && builder && (
                     <Image
                       src={builder
                         .image(post.authorImage)
