@@ -22,7 +22,7 @@ const logger = createScopedLogger("auth");
 export const getAuthOptions: (options?: {
   consent: boolean;
 }) => NextAuthConfig = (options) => ({
-  debug: false,
+  debug: true,
   providers: [
     GoogleProvider({
       clientId: env.GOOGLE_CLIENT_ID,
@@ -43,17 +43,17 @@ export const getAuthOptions: (options?: {
       },
     }),
   ],
-  // logger: {
-  //   error: (error) => {
-  //     logger.error(error.message, { error });
-  //   },
-  //   warn: (message) => {
-  //     logger.warn(message);
-  //   },
-  //   debug: (message, metadata) => {
-  //     logger.info(message, { metadata });
-  //   },
-  // },
+  logger: {
+    error: (error) => {
+      logger.error(error.message, { error });
+    },
+    warn: (message) => {
+      logger.warn(message);
+    },
+    debug: (message, metadata) => {
+      logger.info(message, { metadata });
+    },
+  },
   adapter: {
     ...PrismaAdapter(prisma),
     linkAccount: async (data): Promise<void> => {
@@ -119,7 +119,9 @@ export const getAuthOptions: (options?: {
         });
 
         // --- Step 3: Get user's default organization ---
-        const defaultOrg = await getUserDefaultOrganization(createdAccount.userId);
+        const defaultOrg = await getUserDefaultOrganization(
+          createdAccount.userId,
+        );
 
         // --- Step 4: Create/Update the corresponding EmailAccount record ---
         const userId = createdAccount.userId;
@@ -269,7 +271,9 @@ export const getAuthOptions: (options?: {
       // Include organization context in session (multi-tenant)
       session.organizationId = token.organizationId as string | undefined;
       session.organizationSlug = token.organizationSlug as string | undefined;
-      session.organizationRole = token.organizationRole as OrganizationRole | undefined;
+      session.organizationRole = token.organizationRole as
+        | OrganizationRole
+        | undefined;
 
       if (session.error) {
         logger.error("session.error", {
