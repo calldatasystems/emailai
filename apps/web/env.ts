@@ -2,7 +2,12 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
+// Skip validation for builds without all required environment variables
+const skipValidation =
+  !process.env.DATABASE_URL || !process.env.GOOGLE_ENCRYPT_SECRET;
+
 export const env = createEnv({
+  skipValidation,
   server: {
     NODE_ENV: z.enum(["development", "production", "test"]),
     DATABASE_URL: z.string().url(),
