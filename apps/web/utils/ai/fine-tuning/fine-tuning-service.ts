@@ -31,6 +31,11 @@ interface JobUpdateOptions {
   executorUrl?: string;
   checkpointPath?: string;
   actualCost?: number;
+  // LoRA-specific fields
+  adapterPath?: string;
+  adapterSize?: number;
+  loraRank?: number;
+  loraAlpha?: number;
 }
 
 export class FineTuningService {
@@ -101,7 +106,8 @@ export class FineTuningService {
       return {
         eligible: false,
         sentEmailCount,
-        reason: "Model was trained within the last 30 days. Wait before re-training.",
+        reason:
+          "Model was trained within the last 30 days. Wait before re-training.",
       };
     }
 
@@ -125,8 +131,9 @@ export class FineTuningService {
 
     logger.info("Creating fine-tuning job", { userId, baseModel });
 
-    // Estimate cost (rough estimate: $1-2 for 8B model)
-    const costEstimate = baseModel.includes("70b") ? 12.0 : 1.5;
+    // Estimate cost for LoRA training (much cheaper than full fine-tuning)
+    // LoRA: ~$0.25-0.50 for 8B model, ~$1-2 for 70B model
+    const costEstimate = baseModel.includes("70b") ? 1.5 : 0.25;
 
     const job = await prisma.fineTuningJob.create({
       data: {
@@ -174,19 +181,36 @@ export class FineTuningService {
       },
     });
 
-    // If completed, update user's aiModel
-    if (updates.status === "COMPLETED" && updates.modelName) {
+    // If completed, update user's LoRA adapter and AI model
+    if (updates.status === "COMPLETED") {
+      const userUpdate: {
+        aiProvider?: string;
+        aiModel?: string;
+        loraAdapterPath?: string;
+        loraAdapterId?: string;
+        adapterLastTrained?: Date;
+      } = {};
+
+      if (updates.modelName) {
+        userUpdate.aiProvider = "ollama";
+        userUpdate.aiModel = updates.modelName;
+      }
+
+      if (updates.adapterPath) {
+        userUpdate.loraAdapterPath = updates.adapterPath;
+        userUpdate.loraAdapterId = job.id; // Use job ID as adapter version
+        userUpdate.adapterLastTrained = new Date();
+      }
+
       await prisma.user.update({
         where: { id: job.userId },
-        data: {
-          aiProvider: "ollama",
-          aiModel: updates.modelName,
-        },
+        data: userUpdate,
       });
 
-      logger.info("User AI model updated", {
+      logger.info("User AI configuration updated", {
         userId: job.userId,
         modelName: updates.modelName,
+        adapterPath: updates.adapterPath,
       });
     }
 
