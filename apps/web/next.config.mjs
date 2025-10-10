@@ -1,6 +1,5 @@
 import { fileURLToPath } from "node:url";
 import { withSentryConfig } from "@sentry/nextjs";
-import { withAxiom } from "next-axiom";
 import nextMdx from "@next/mdx";
 import { createJiti } from "jiti";
 import withSerwistInit from "@serwist/next";
@@ -321,4 +320,4 @@ const withSerwist = withSerwistInit({
   disable: env.NODE_ENV !== "production",
 });
 
-export default withAxiom(withSerwist(exportConfig));
+export default withSerwist(exportConfig);

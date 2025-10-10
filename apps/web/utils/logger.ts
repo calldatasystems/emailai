@@ -1,5 +1,4 @@
 /* eslint-disable no-console */
-import { log } from "next-axiom";
 import { env } from "@/env";
 
 export type Logger = ReturnType<typeof createScopedLogger>;
@@ -15,7 +14,8 @@ const colors = {
 } as const;
 
 export function createScopedLogger(scope: string) {
-  if (env.NEXT_PUBLIC_AXIOM_TOKEN) return createAxiomLogger(scope);
+  // Axiom integration removed - using console logging for Vercel
+  // if (env.NEXT_PUBLIC_AXIOM_TOKEN) return createAxiomLogger(scope);
 
   const createLogger = (fields: Record<string, unknown> = {}) => {
     const formatMessage = (
@@ -62,36 +62,4 @@ export function createScopedLogger(scope: string) {
   };
 
   return createLogger();
-}
-
-function createAxiomLogger(scope: string) {
-  const createLogger = (fields: Record<string, unknown> = {}) => ({
-    info: (message: string, args?: Record<string, unknown>) =>
-      log.info(message, { scope, ...fields, ...args }),
-    error: (message: string, args?: Record<string, unknown>) =>
-      log.error(message, { scope, ...fields, ...formatError(args) }),
-    warn: (message: string, args?: Record<string, unknown>) =>
-      log.warn(message, { scope, ...fields, ...args }),
-    trace: (message: string, args?: Record<string, unknown>) => {
-      if (process.env.NODE_ENV !== "production") {
-        log.debug(message, { scope, ...fields, ...args });
-      }
-    },
-    with: (newFields: Record<string, unknown>) =>
-      createLogger({ ...fields, ...newFields }),
-  });
-
-  return createLogger();
-}
-
-function formatError(args?: Record<string, unknown>) {
-  if (env.NODE_ENV !== "production") return args;
-  const error = args?.error;
-  if (error) args.error = cleanError(error);
-  return args;
-}
-
-function cleanError(error: unknown) {
-  if (error instanceof Error) return error.message;
-  return error;
 }
