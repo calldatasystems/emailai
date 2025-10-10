@@ -65,6 +65,11 @@ model User {
   aiApiKey              String?
   webhookSecret         String?
 
+  // LoRA adapter fields
+  loraAdapterPath   String?   // S3/storage path to user's active LoRA adapter
+  loraAdapterId     String?   // Current adapter version/ID
+  adapterLastTrained DateTime? // When adapter was last updated
+
   // premium can be shared among multiple users
   premiumId      String?
   premium        Premium? @relation(name: "userPremium", fields: [premiumId], references: [id])
@@ -797,19 +802,25 @@ model FineTuningJob {
   trainingEmails Int?    // Number of emails used for training
   epochs         Int     @default(3)
 
+  // LoRA-specific configuration
+  adapterPath    String? // S3/storage path to trained LoRA adapter files
+  adapterSize    Int?    // Size in bytes of the adapter
+  loraRank       Int     @default(16)  // LoRA rank parameter (typically 8-64)
+  loraAlpha      Int     @default(16)  // LoRA alpha parameter (typically same as rank)
+
   // Results
-  modelName      String? // e.g., "emailai-user123"
+  modelName      String? // e.g., "user_lora_xyz" - Ollama model name
   checkpointPath String? // Path to model checkpoint
   deployedAt     DateTime?
 
   // Job execution details
-  executorId     String? // e.g., Vast.ai instance ID
-  executorUrl    String? // e.g., SSH URL for monitoring
-  costEstimate   Float?  // Estimated cost in USD
+  executorId     String? // e.g., Docker container ID or worker instance ID
+  executorUrl    String? // e.g., Training service URL for monitoring
+  costEstimate   Float   @default(0.25) // Estimated cost in USD (much cheaper with LoRA)
   actualCost     Float?  // Actual cost after completion
 
   // Metadata
-  metadata       Json?   // Additional job-specific data
+  metadata       Json?   // Additional job-specific data (training metrics, loss, etc.)
 
   @@index([userId])
   @@index([status])

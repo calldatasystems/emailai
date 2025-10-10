@@ -90,13 +90,24 @@ export const getAuthOptions: (options?: {
               (p) => p.metadata?.primary,
             )?.url;
           } catch (profileError) {
-            logger.error("[linkAccount] Error fetching profile info:", {
+            logger.error("[linkAccount] Error fetching profile info, falling back to OAuth token data:", {
               profileError,
             });
-            // Decide if this is fatal. Probably should be.
-            throw new Error(
-              "Failed to fetch profile info for linking account.",
-            );
+            // Fall back to data from the OAuth profile (id_token)
+            // This allows login to work even if People API is not enabled
+            if (profile && typeof profile === 'object' && 'email' in profile) {
+              primaryEmail = (profile.email as string)?.toLowerCase();
+              primaryName = 'name' in profile ? (profile.name as string) : undefined;
+              primaryPhotoUrl = 'picture' in profile ? (profile.picture as string) : undefined;
+              logger.info("[linkAccount] Using OAuth token data as fallback", {
+                email: primaryEmail,
+                name: primaryName,
+              });
+            } else {
+              throw new Error(
+                "Failed to fetch profile info and no fallback data available.",
+              );
+            }
           }
         } else {
           logger.error(
@@ -313,6 +324,35 @@ export const getAuthOptions: (options?: {
             error: resendResult.reason,
           });
           captureException(resendResult.reason, undefined, user.email);
+        }
+
+        // Give new users a 7-day premium trial
+        try {
+          const trialEndDate = new Date();
+          trialEndDate.setDate(trialEndDate.getDate() + 7);
+
+          const premium = await prisma.premium.create({
+            data: {
+              lemonSqueezyRenewsAt: trialEndDate,
+              tier: "BASIC_MONTHLY", // or whatever tier you want for trial
+            },
+          });
+
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { premiumId: premium.id },
+          });
+
+          logger.info("Created 7-day premium trial for new user", {
+            email: user.email,
+            trialEndDate,
+          });
+        } catch (error) {
+          logger.error("Error creating premium trial for new user", {
+            email: user.email,
+            error,
+          });
+          captureException(error, undefined, user.email);
         }
       }
 
