@@ -10,7 +10,7 @@ import {
 
 export function ErrorPage(props: {
   title: string;
-  description: string;
+  description: string | React.ReactNode;
   button?: React.ReactNode;
 }) {
   return (
