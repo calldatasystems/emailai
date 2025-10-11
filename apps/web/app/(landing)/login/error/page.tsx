@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { BasicLayout } from "@/components/layouts/BasicLayout";
 import { ErrorPage } from "@/components/ErrorPage";
@@ -11,7 +11,7 @@ import { useUser } from "@/hooks/useUser";
 import { LoadingContent } from "@/components/LoadingContent";
 import { Loading } from "@/components/Loading";
 
-export default function LogInErrorPage() {
+function LogInErrorContent() {
   const { data, isLoading, error } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -76,5 +76,13 @@ export default function LogInErrorPage() {
         {/* <AutoLogOut loggedIn={!!session?.user.email} /> */}
       </LoadingContent>
     </BasicLayout>
+  );
+}
+
+export default function LogInErrorPage() {
+  return (
+    <Suspense fallback={<Loading />}>
+      <LogInErrorContent />
+    </Suspense>
   );
 }
