@@ -5,7 +5,7 @@ import { AboutSectionForm } from "@/app/(app)/[emailAccountId]/settings/AboutSec
 // import { SignatureSectionForm } from "@/app/(app)/settings/SignatureSectionForm";
 // import { LabelsSection } from "@/app/(app)/settings/LabelsSection";
 import { DeleteSection } from "@/app/(app)/[emailAccountId]/settings/DeleteSection";
-import { ModelSection } from "@/app/(app)/[emailAccountId]/settings/ModelSection";
+import { AIModelSection } from "@/app/(app)/[emailAccountId]/settings/AIModelSection";
 import { EmailUpdatesSection } from "@/app/(app)/[emailAccountId]/settings/EmailUpdatesSection";
 import { MultiAccountSection } from "@/app/(app)/[emailAccountId]/settings/MultiAccountSection";
 import { ApiKeysSection } from "@/app/(app)/[emailAccountId]/settings/ApiKeysSection";
@@ -51,7 +51,7 @@ export default function SettingsPage(_props: {
       </TabsContent>
       <TabsContent value="user">
         <FormWrapper>
-          <ModelSection />
+          <AIModelSection />
           <MultiAccountSection />
           <WebhookSection />
           <ApiKeysSection />

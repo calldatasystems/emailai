@@ -39,7 +39,7 @@ export function ModelSection() {
     <FormSection>
       <FormSectionLeft
         title="AI Model"
-        description="Choose your AI model and use your own API key."
+        description="Your AI uses our Ollama models. Personalized training is available below."
       />
 
       <LoadingContent loading={isLoading || isLoadingModels} error={error}>
@@ -129,65 +129,11 @@ function ModelSectionForm(props: {
       : modelOptions[aiProvider];
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <Select
-        label="Provider"
-        options={providerOptions}
-        {...register("aiProvider")}
-        error={errors.aiProvider}
+    <div className="space-y-4">
+      <AlertBasic
+        title="CallData AI"
+        description="EmailAI wwill automatically create a custom dedicated AI model for personalized AI-trained content written in your writing style. No other account or entity will use your model. See the Personalized AI Model section below."
       />
-
-      {watch("aiProvider") !== DEFAULT_PROVIDER && (
-        <>
-          {modelSelectOptions.length ? (
-            <Select
-              label="Model"
-              options={modelSelectOptions}
-              {...register("aiModel")}
-              error={errors.aiModel}
-            />
-          ) : (
-            <Input
-              type="text"
-              name="aiModel"
-              label="Model"
-              registerProps={register("aiModel")}
-              error={errors.aiModel}
-            />
-          )}
-
-          <Input
-            type="password"
-            name="aiApiKey"
-            label="API Key"
-            registerProps={register("aiApiKey")}
-            error={errors.aiApiKey}
-          />
-        </>
-      )}
-
-      {globalError && (
-        <AlertError title="Error saving" description={globalError.message} />
-      )}
-
-      {watch("aiProvider") === Provider.OPEN_AI &&
-        watch("aiApiKey") &&
-        modelSelectOptions.length === 0 &&
-        (props.aiApiKey ? (
-          <AlertError
-            title="Invalid API Key"
-            description="We couldn't validate your API key. Please try again."
-          />
-        ) : (
-          <AlertBasic
-            title="API Key"
-            description="Click Save to view available models for your API key."
-          />
-        ))}
-
-      <Button type="submit" loading={isSubmitting}>
-        Save
-      </Button>
-    </form>
+    </div>
   );
 }

@@ -82,6 +82,7 @@ echo "  Model: $MODEL_DIR"
 echo "  User ID: $USER_ID"
 echo "  Merge: $MERGE"
 echo "  Quantize: ${QUANTIZE:-none}"
+echo "  Ollama Host: ${OLLAMA_HOST:-http://localhost:11434}"
 echo ""
 
 # Load training config to get base model
@@ -140,7 +141,19 @@ EOF
     info "Creating Ollama model: $MODEL_NAME"
 
     if ! command -v ollama &> /dev/null; then
-        error "Ollama not found. Please install Ollama first."
+        error "Ollama not found. Please install Ollama CLI first."
+    fi
+
+    # Test connectivity to Ollama server
+    OLLAMA_TEST_HOST="${OLLAMA_HOST:-http://localhost:11434}"
+    info "Testing connection to Ollama server: $OLLAMA_TEST_HOST"
+
+    if ! curl -sf "$OLLAMA_TEST_HOST/api/tags" &> /dev/null; then
+        warn "Cannot connect to Ollama server at $OLLAMA_TEST_HOST"
+        warn "Make sure the server is running and accessible"
+        # Don't fail - ollama CLI might still work
+    else
+        success "Connected to Ollama server"
     fi
 
     ollama create "$MODEL_NAME" -f "$MODELFILE"
@@ -265,7 +278,12 @@ echo ""
 echo "Response:"
 echo "─────────────────────────────────────────────────────────────"
 
-ollama run "$MODEL_NAME" "$TEST_PROMPT"
+# Test the model - this will use OLLAMA_HOST if set
+if ollama run "$MODEL_NAME" "$TEST_PROMPT" 2>&1; then
+    success "Model test completed"
+else
+    warn "Model test failed - you can test manually later with: ollama run $MODEL_NAME"
+fi
 
 echo "─────────────────────────────────────────────────────────────"
 echo ""

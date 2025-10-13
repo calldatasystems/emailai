@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/app/api/auth/[...nextauth]/auth";
 import { FineTuningService } from "@/utils/ai/fine-tuning/fine-tuning-service";
+import { triggerJobProcessing } from "@/utils/ai/fine-tuning/job-processor";
 import { createScopedLogger } from "@/utils/logger";
 
 const logger = createScopedLogger("api/user/ai/fine-tune");
@@ -47,15 +48,19 @@ export async function POST(request: Request) {
       epochs,
     });
 
-    // TODO: Trigger the actual fine-tuning process
-    // This could be:
-    // 1. A webhook to a separate worker service
-    // 2. A message to a queue (Redis, SQS, etc.)
-    // 3. A GitHub Action trigger
-    // 4. A Vast.ai API call
-    //
-    // For now, we just create the job record
-    // The actual training would be handled by a separate service
+    // Automatically trigger background processing
+    // This runs the training worker in a separate process
+    // Training happens asynchronously (2-4 hours)
+    logger.info("Triggering automatic job processing", { jobId: job.id });
+
+    // Don't await - let it run in background
+    triggerJobProcessing(job.id).catch((error) => {
+      logger.error("Failed to trigger job processing", {
+        jobId: job.id,
+        error: error.message
+      });
+      // Job remains PENDING and can be retried manually if needed
+    });
 
     return NextResponse.json({
       success: true,
@@ -101,11 +106,13 @@ export async function GET(request: Request) {
     }
 
     // Get all jobs for user
-    const jobs = await FineTuningService.getUserJobs(session.user.id);
-    const activeJob = await FineTuningService.getActiveJob(session.user.id);
-    const eligibility = await FineTuningService.isEligibleForFineTuning(
-      session.user.id,
-    );
+    const [jobs, activeJob, eligibility, emailCollectionStatus] =
+      await Promise.all([
+        FineTuningService.getUserJobs(session.user.id),
+        FineTuningService.getActiveJob(session.user.id),
+        FineTuningService.isEligibleForFineTuning(session.user.id),
+        FineTuningService.getEmailCollectionStatus(session.user.id),
+      ]);
 
     return NextResponse.json({
       jobs,
@@ -115,6 +122,7 @@ export async function GET(request: Request) {
         sentEmailCount: eligibility.sentEmailCount,
         reason: eligibility.reason,
       },
+      emailCollectionStatus,
     });
   } catch (error: any) {
     logger.error("Failed to get fine-tuning status", { error });

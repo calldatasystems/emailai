@@ -338,4 +338,60 @@ export class FineTuningService {
           : `You have ${eligibility.sentEmailCount} sent emails. You can now train a personalized AI model! (${RECOMMENDED_EMAILS}+ recommended for best results)`,
     };
   }
+
+  /**
+   * Get email collection status for a user
+   * Returns info about background email metadata collection
+   */
+  static async getEmailCollectionStatus(userId: string): Promise<{
+    isCollecting: boolean;
+    totalEmails: number;
+    sentEmails: number;
+    lastUpdated: string;
+  }> {
+    // Get total email count and sent email count
+    const [totalEmails, sentEmails, latestEmail] = await Promise.all([
+      prisma.emailMessage.count({
+        where: {
+          emailAccount: {
+            userId,
+          },
+        },
+      }),
+      prisma.emailMessage.count({
+        where: {
+          emailAccount: {
+            userId,
+          },
+          sent: true,
+        },
+      }),
+      prisma.emailMessage.findFirst({
+        where: {
+          emailAccount: {
+            userId,
+          },
+        },
+        orderBy: {
+          date: "desc",
+        },
+        select: {
+          date: true,
+        },
+      }),
+    ]);
+
+    // Consider "collecting" if we have fewer than the minimum required emails
+    // or if the latest email is very recent (within last 5 minutes)
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const isRecentlyUpdated = latestEmail && latestEmail.date > fiveMinutesAgo;
+    const isCollecting = sentEmails < MIN_EMAILS_FOR_TRAINING || isRecentlyUpdated;
+
+    return {
+      isCollecting,
+      totalEmails,
+      sentEmails,
+      lastUpdated: latestEmail?.date.toISOString() || new Date().toISOString(),
+    };
+  }
 }

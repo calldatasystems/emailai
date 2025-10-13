@@ -41,9 +41,16 @@ interface FineTuningData {
     sentEmailCount: number;
     reason?: string;
   };
+  emailCollectionStatus?: {
+    isCollecting: boolean;
+    totalEmails: number;
+    sentEmails: number;
+    lastUpdated: string;
+  };
 }
 
 export function AIModelSection() {
+  // Enhanced email collection status with real-time updates
   const [data, setData] = useState<FineTuningData | null>(null);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -65,15 +72,15 @@ export function AIModelSection() {
   useEffect(() => {
     fetchStatus();
 
-    // Poll for updates if there's an active job
+    // Poll for updates if there's an active job OR email collection is in progress
     const interval = setInterval(() => {
-      if (data?.activeJob) {
+      if (data?.activeJob || data?.emailCollectionStatus?.isCollecting) {
         fetchStatus();
       }
-    }, 10000); // Every 10 seconds
+    }, 5000); // Every 5 seconds for more responsive updates
 
     return () => clearInterval(interval);
-  }, [data?.activeJob]);
+  }, [data?.activeJob, data?.emailCollectionStatus?.isCollecting]);
 
   const startFineTuning = async () => {
     setCreating(true);
@@ -134,7 +141,7 @@ export function AIModelSection() {
     );
   }
 
-  const { eligibility, activeJob, jobs } = data || {};
+  const { eligibility, activeJob, jobs, emailCollectionStatus } = data || {};
   const completedJob = jobs?.find((j) => j.status === "COMPLETED");
 
   return (
@@ -147,10 +154,50 @@ export function AIModelSection() {
             <h3 className="text-lg font-medium">Personalized AI Model</h3>
           </div>
           <p className="text-sm text-muted-foreground mt-1">
-            Train an AI model on your writing style for more authentic email
-            replies
+            Your account is using a custom dedicated fine-tuned AI model for personalized AI-trained content written in your writing style. A custom AI model is being trained using your emails to determine your specific writing style for more authentic email replies. Email content itself is ephemeral; it is only used to train and never stored.
           </p>
         </div>
+
+        {/* Email Collection Status */}
+        {emailCollectionStatus?.isCollecting && (
+          <Alert>
+            <Activity className="h-4 w-4 animate-pulse" />
+            <AlertTitle>Collecting Email Data</AlertTitle>
+            <AlertDescription>
+              <div className="space-y-3">
+                <p>
+                  EmailAI is scanning your Gmail account in the background to collect email metadata for training.
+                </p>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium text-primary">
+                      {emailCollectionStatus.sentEmails} sent emails
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      (need 100 to start training)
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      {emailCollectionStatus.totalEmails} total emails scanned
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      Last: {new Date(emailCollectionStatus.lastUpdated).toLocaleTimeString()}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded p-2">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <span>
+                    {emailCollectionStatus.sentEmails < 100
+                      ? `Scanning Gmail... ${Math.round((emailCollectionStatus.sentEmails / 100) * 100)}% to training threshold`
+                      : "Ready for training! Collection will continue in background."}
+                  </span>
+                </div>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Eligibility Status */}
         {!eligibility?.eligible && (
@@ -222,25 +269,16 @@ export function AIModelSection() {
 
         {/* Start Training Button */}
         {!activeJob && eligibility?.eligible && (
-          <div className="space-y-3">
-            <Button
-              onClick={startFineTuning}
-              disabled={creating}
-              className="w-full"
-            >
-              {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {completedJob ? "Re-train Model" : "Train Personalized Model"}
-            </Button>
-
-            <div className="text-sm text-muted-foreground space-y-1">
-              <p>• Training takes 2-4 hours on a rented GPU</p>
-              <p>• Estimated cost: $1-2 (one-time)</p>
-              <p>• Uses {eligibility?.sentEmailCount} of your sent emails</p>
-              <p>
-                • Model will match your writing style, tone, and vocabulary
-              </p>
-            </div>
-          </div>
+          <Button
+            onClick={startFineTuning}
+            disabled={creating}
+            className="w-full"
+          >
+            {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {completedJob
+              ? `Re-train AI Model (using ${eligibility?.sentEmailCount} emails)`
+              : `Train AI Model (using ${eligibility?.sentEmailCount} emails)`}
+          </Button>
         )}
 
         {/* Training History */}

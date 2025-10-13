@@ -17,6 +17,7 @@ import { ErrorMessages } from "@/app/(app)/ErrorMessages";
 import { QueueInitializer } from "@/store/QueueInitializer";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { EmailViewer } from "@/components/EmailViewer";
+import { FineTuningNotificationBanner } from "@/components/FineTuningNotificationBanner";
 
 export const viewport = {
   themeColor: "#FFF",
@@ -45,6 +46,7 @@ export default async function AppLayout({
   return (
     <AppProviders>
       <SideNavWithTopNav defaultOpen={!isClosed}>
+        <FineTuningNotificationBanner />
         <ErrorMessages />
         {children}
       </SideNavWithTopNav>
