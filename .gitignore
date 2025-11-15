@@ -1,73 +1,27 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
-/node_modules
-node_modules
-/.pnp
-.pnp.js
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
+# Existing gitignore content
+*.log
+*.pyc
 .DS_Store
-*.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# local env files
-.env*.local
+node_modules/
 .env
-.env.test
-
-# vercel
+.env.local
 .vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
 .turbo
-dist
-.next
 
-# tinybird
-.tinyb
-.venv
+# Terraform
+**/.terraform/
+**/.terraform.lock.hcl
+**/terraform.tfstate
+**/terraform.tfstate.backup
+**/*.tfvars
+!**/*.tfvars.example
 
-.react-email
+# LoRA fine-tuning output (large files)
+ollama-server/fine-tuning/output/
+ollama-server/fine-tuning/training-data/
 
-.sentryclirc
-.pnpm-store/*
-
-# Serwist
-**/public/serwist**
-**/public/sw**
-**/public/worker**
-**/public/fallback**
-**/public/precache**
-
-# Sanity
-.sanity
-
-TODO.md
-
-tasks/ 
-
-# prisma
-apps/web/generated
-
-# docker compose override file
-docker-compose.override.yaml
-docker-compose.override.yml
-apps/web/.env.production
+# Large model files
+*.safetensors
+*.pt
+optimizer.pt
+*.bin
