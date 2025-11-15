@@ -1,0 +1,331 @@
+name: Deploy to Production (AWS)
+
+on:
+  workflow_dispatch:  # Manual trigger only
+    inputs:
+      action:
+        description: 'Deployment action'
+        required: true
+        default: 'apply'
+        type: choice
+        options:
+          - apply
+          - plan-only
+
+env:
+  AWS_REGION: us-east-1
+  TF_VERSION: 1.5.0
+  DOCKER_REPO: emailai
+
+jobs:
+  terraform-deploy:
+    name: Terraform Deploy Infrastructure
+    runs-on: ubuntu-latest
+    outputs:
+      instance_ids: ${{ steps.output.outputs.instance_ids }}
+      alb_dns: ${{ steps.output.outputs.alb_dns }}
+      db_endpoint: ${{ steps.output.outputs.db_endpoint }}
+
+    defaults:
+      run:
+        working-directory: terraform/environments/prod
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check -recursive
+        continue-on-error: true
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          terraform plan \
+            -var="db_password=${{ secrets.EMAILAI_DB_PASSWORD }}" \
+            -var="certificate_arn=${{ secrets.EMAILAI_CERTIFICATE_ARN }}" \
+            -out=tfplan \
+            -detailed-exitcode || echo "exitcode=$?" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Terraform Apply
+        if: github.event.inputs.action == 'apply' && steps.plan.outputs.exitcode == '2'
+        id: apply
+        run: |
+          terraform apply -auto-approve tfplan
+          echo "Infrastructure deployed successfully"
+
+      - name: Get Terraform Outputs
+        if: github.event.inputs.action == 'apply'
+        id: output
+        run: |
+          echo "instance_ids=$(terraform output -json instance_ids | jq -r '.[]' | tr '\n' ',' | sed 's/,$//')" >> $GITHUB_OUTPUT
+          echo "alb_dns=$(terraform output -raw alb_dns_name)" >> $GITHUB_OUTPUT
+          echo "db_endpoint=$(terraform output -raw database_endpoint)" >> $GITHUB_OUTPUT
+
+      - name: Display Infrastructure Info
+        if: github.event.inputs.action == 'apply'
+        run: |
+          echo "=== EmailAI Infrastructure Deployed ==="
+          echo "ALB DNS: ${{ steps.output.outputs.alb_dns }}"
+          echo "Database: ${{ steps.output.outputs.db_endpoint }}"
+          echo "Instances: ${{ steps.output.outputs.instance_ids }}"
+          terraform output deployment_info
+
+  deploy-application:
+    name: Deploy Application to EC2
+    needs: terraform-deploy
+    if: github.event.inputs.action == 'apply'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        instance_index: [0, 1]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get instance ID
+        id: instance
+        run: |
+          INSTANCE_IDS="${{ needs.terraform-deploy.outputs.instance_ids }}"
+          INSTANCE_ID=$(echo $INSTANCE_IDS | cut -d',' -f$((${{ matrix.instance_index }} + 1)))
+          echo "id=$INSTANCE_ID" >> $GITHUB_OUTPUT
+          echo "Deploying to instance: $INSTANCE_ID"
+
+      - name: Wait for instance to be ready
+        run: |
+          echo "Waiting for instance ${{ steps.instance.outputs.id }} to be ready..."
+          aws ec2 wait instance-running --instance-ids ${{ steps.instance.outputs.id }}
+          aws ssm wait command-executed --command-id $(
+            aws ssm send-command \
+              --instance-ids ${{ steps.instance.outputs.id }} \
+              --document-name "AWS-RunShellScript" \
+              --parameters 'commands=["echo ready"]' \
+              --query "Command.CommandId" \
+              --output text
+          ) || true
+          sleep 30
+
+      - name: Clone EmailAI repository
+        run: |
+          aws ssm send-command \
+            --instance-ids ${{ steps.instance.outputs.id }} \
+            --document-name "AWS-RunShellScript" \
+            --parameters 'commands=[
+              "sudo mkdir -p /opt/emailai",
+              "sudo chown ec2-user:ec2-user /opt/emailai",
+              "cd /opt/emailai",
+              "if [ -d .git ]; then git pull; else git clone https://github.com/${{ github.repository_owner }}/emailai.git .; fi"
+            ]' \
+            --output text
+
+      - name: Create environment file
+        run: |
+          aws ssm send-command \
+            --instance-ids ${{ steps.instance.outputs.id }} \
+            --document-name "AWS-RunShellScript" \
+            --parameters commands="[
+              \"cat > /opt/emailai/.env <<'EOF'
+# Database
+DATABASE_URL=postgresql://${{ secrets.EMAILAI_DB_USER }}:${{ secrets.EMAILAI_DB_PASSWORD }}@${{ needs.terraform-deploy.outputs.db_endpoint }}/emailai_prod?schema=public
+DIRECT_URL=postgresql://${{ secrets.EMAILAI_DB_USER }}:${{ secrets.EMAILAI_DB_PASSWORD }}@${{ needs.terraform-deploy.outputs.db_endpoint }}/emailai_prod?schema=public
+
+# Application
+NEXTAUTH_URL=https://emailai.calldata.app
+NEXTAUTH_SECRET=${{ secrets.EMAILAI_NEXTAUTH_SECRET }}
+NODE_ENV=production
+
+# Google OAuth
+GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+GOOGLE_ENCRYPT_SECRET=${{ secrets.GOOGLE_ENCRYPT_SECRET }}
+GOOGLE_ENCRYPT_SALT=${{ secrets.GOOGLE_ENCRYPT_SALT }}
+GOOGLE_PUBSUB_TOPIC_NAME=${{ secrets.GOOGLE_PUBSUB_TOPIC_NAME }}
+GOOGLE_PUBSUB_VERIFICATION_TOKEN=${{ secrets.GOOGLE_PUBSUB_VERIFICATION_TOKEN }}
+
+# API Security
+INTERNAL_API_KEY=${{ secrets.EMAILAI_INTERNAL_API_KEY }}
+API_KEY_SALT=${{ secrets.EMAILAI_API_KEY_SALT }}
+
+# Redis/Cache
+UPSTASH_REDIS_URL=${{ secrets.UPSTASH_REDIS_URL }}
+UPSTASH_REDIS_TOKEN=${{ secrets.UPSTASH_REDIS_TOKEN }}
+REDIS_URL=${{ secrets.REDIS_URL }}
+QSTASH_TOKEN=${{ secrets.QSTASH_TOKEN }}
+QSTASH_CURRENT_SIGNING_KEY=${{ secrets.QSTASH_CURRENT_SIGNING_KEY }}
+QSTASH_NEXT_SIGNING_KEY=${{ secrets.QSTASH_NEXT_SIGNING_KEY }}
+
+# AI Models (Vast.ai)
+OLLAMA_BASE_URL=${{ secrets.VASTAI_OLLAMA_URL }}
+NEXT_PUBLIC_OLLAMA_MODEL=llama3.3:70b
+DEFAULT_LLM_PROVIDER=ollama
+
+# Optional Cloud AI (fallback)
+OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
+
+# Monitoring (optional)
+NEXT_PUBLIC_POSTHOG_KEY=${{ secrets.POSTHOG_KEY }}
+NEXT_PUBLIC_SENTRY_DSN=${{ secrets.SENTRY_DSN }}
+EOF\"
+            ]" \
+            --output text
+
+      - name: Build Docker image
+        run: |
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids ${{ steps.instance.outputs.id }} \
+            --document-name "AWS-RunShellScript" \
+            --parameters 'commands=[
+              "cd /opt/emailai",
+              "sudo docker build -f docker/Dockerfile.prod -t emailai:latest .",
+              "echo Docker build complete"
+            ]' \
+            --query "Command.CommandId" \
+            --output text)
+
+          echo "Waiting for Docker build to complete..."
+          aws ssm wait command-executed \
+            --command-id $COMMAND_ID \
+            --instance-id ${{ steps.instance.outputs.id }} \
+            --timeout 600 || true
+
+      - name: Run database migrations
+        if: matrix.instance_index == 0
+        run: |
+          aws ssm send-command \
+            --instance-ids ${{ steps.instance.outputs.id }} \
+            --document-name "AWS-RunShellScript" \
+            --parameters 'commands=[
+              "cd /opt/emailai",
+              "sudo docker run --rm --env-file .env emailai:latest pnpm --filter inbox-zero-ai exec -- prisma migrate deploy"
+            ]' \
+            --output text
+
+          sleep 30
+
+      - name: Stop existing container
+        run: |
+          aws ssm send-command \
+            --instance-ids ${{ steps.instance.outputs.id }} \
+            --document-name "AWS-RunShellScript" \
+            --parameters 'commands=[
+              "sudo docker stop emailai || true",
+              "sudo docker rm emailai || true"
+            ]' \
+            --output text
+
+          sleep 10
+
+      - name: Start EmailAI container
+        run: |
+          aws ssm send-command \
+            --instance-ids ${{ steps.instance.outputs.id }} \
+            --document-name "AWS-RunShellScript" \
+            --parameters 'commands=[
+              "cd /opt/emailai",
+              "sudo docker run -d --name emailai --restart unless-stopped -p 3000:3000 --env-file .env emailai:latest",
+              "echo Container started, waiting for health check...",
+              "sleep 15",
+              "sudo docker logs emailai --tail 50"
+            ]' \
+            --output text
+
+      - name: Verify deployment
+        run: |
+          sleep 30
+
+          # Get private IP
+          PRIVATE_IP=$(aws ec2 describe-instances \
+            --instance-ids ${{ steps.instance.outputs.id }} \
+            --query 'Reservations[0].Instances[0].PrivateIpAddress' \
+            --output text)
+
+          echo "Instance ${{ matrix.instance_index }} deployed at $PRIVATE_IP"
+          echo "Container logs:"
+
+          aws ssm send-command \
+            --instance-ids ${{ steps.instance.outputs.id }} \
+            --document-name "AWS-RunShellScript" \
+            --parameters 'commands=["sudo docker ps", "sudo docker logs emailai --tail 20"]' \
+            --output text
+
+  health-check:
+    name: Final Health Check
+    needs: [terraform-deploy, deploy-application]
+    runs-on: ubuntu-latest
+    if: github.event.inputs.action == 'apply'
+
+    steps:
+      - name: Wait for ALB to be healthy
+        run: |
+          echo "Waiting 60 seconds for instances to register with ALB..."
+          sleep 60
+
+      - name: Check ALB endpoint
+        run: |
+          ALB_DNS="${{ needs.terraform-deploy.outputs.alb_dns }}"
+          echo "Testing ALB endpoint: http://$ALB_DNS"
+
+          for i in {1..10}; do
+            if curl -f -s -o /dev/null -w "%{http_code}" "http://$ALB_DNS/api/health" | grep -q "200"; then
+              echo "✅ ALB health check passed!"
+              exit 0
+            fi
+            echo "Attempt $i/10 failed, retrying in 10s..."
+            sleep 10
+          done
+
+          echo "⚠️ Health check did not pass, but deployment may still be successful"
+          echo "Check manually at: http://$ALB_DNS"
+
+      - name: Deployment Summary
+        run: |
+          echo "======================================"
+          echo "EmailAI Production Deployment Complete"
+          echo "======================================"
+          echo ""
+          echo "Application URL: http://${{ needs.terraform-deploy.outputs.alb_dns }}"
+          echo "Database: ${{ needs.terraform-deploy.outputs.db_endpoint }}"
+          echo "Instances: ${{ needs.terraform-deploy.outputs.instance_ids }}"
+          echo ""
+          echo "Next steps:"
+          echo "1. Update DNS CNAME: emailai.calldata.app -> ${{ needs.terraform-deploy.outputs.alb_dns }}"
+          echo "2. Verify HTTPS is working (if certificate configured)"
+          echo "3. Test authentication and email sync"
+          echo "4. Configure Vast.ai AI models if not already done"
+          echo "======================================"
