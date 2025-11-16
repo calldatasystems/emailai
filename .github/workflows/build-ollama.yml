@@ -1,0 +1,60 @@
+name: Build Ollama Docker Image
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - prod-deployment
+    paths:
+      - 'docker/Dockerfile.ollama'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ghcr.io/calldatasystems/emailai-ollama
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix={{branch}}-
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/Dockerfile.ollama
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Image details
+        run: |
+          echo "✅ Ollama image built and pushed successfully!"
+          echo "Image: ${{ env.IMAGE_NAME }}:latest"
+          echo ""
+          echo "To deploy on Vast.ai, use:"
+          echo "vastai create instance <OFFER_ID> \\"
+          echo "  --image ${{ env.IMAGE_NAME }}:latest \\"
+          echo "  --disk 150 \\"
+          echo "  --label emailai-ollama-prod"
