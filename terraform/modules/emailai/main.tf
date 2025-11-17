@@ -76,7 +76,7 @@ resource "aws_instance" "emailai" {
     encrypted             = true
   }
 
-  # User data script to install Docker and Docker Compose
+  # User data script to install Docker, Docker Compose, and Nginx
   user_data = <<-EOF
               #!/bin/bash
               set -e
@@ -95,6 +95,57 @@ resource "aws_instance" "emailai" {
 
               # Install git for cloning repo
               dnf install -y git
+
+              # Install nginx for LLM API reverse proxy
+              dnf install -y nginx
+
+              # Configure nginx for LLM proxy
+              cat > /etc/nginx/conf.d/llm-proxy.conf <<'NGINX_EOF'
+              server {
+                  listen 8001;
+                  server_name _;
+
+                  # Increase timeouts for long-running model operations
+                  proxy_connect_timeout 600s;
+                  proxy_send_timeout 600s;
+                  proxy_read_timeout 600s;
+
+                  # Buffer settings for streaming responses
+                  proxy_buffering off;
+                  proxy_request_buffering off;
+
+                  # Strip /llm prefix and proxy to Vast.ai Ollama instance
+                  location / {
+                      # Rewrite to remove /llm prefix if present
+                      rewrite ^/llm(.*)$$ $$1 break;
+
+                      # Proxy to Vast.ai Ollama instance
+                      proxy_pass http://45.14.246.9:10570;
+
+                      # Preserve original headers
+                      proxy_set_header Host $$host;
+                      proxy_set_header X-Real-IP $$remote_addr;
+                      proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+                      proxy_set_header X-Forwarded-Proto $$scheme;
+
+                      # WebSocket support (if needed for streaming)
+                      proxy_http_version 1.1;
+                      proxy_set_header Upgrade $$http_upgrade;
+                      proxy_set_header Connection "upgrade";
+                  }
+
+                  # Health check endpoint
+                  location /health {
+                      access_log off;
+                      return 200 "OK\n";
+                      add_header Content-Type text/plain;
+                  }
+              }
+NGINX_EOF
+
+              # Enable and start nginx
+              systemctl enable nginx
+              systemctl start nginx
 
               # Create app directory
               mkdir -p /opt/emailai

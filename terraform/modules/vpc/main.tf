@@ -278,6 +278,15 @@ resource "aws_security_group" "emailai" {
     security_groups = [aws_security_group.alb.id]
   }
 
+  # LLM API proxy port from ALB
+  ingress {
+    description     = "LLM API proxy from ALB"
+    from_port       = 8001
+    to_port         = 8001
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb.id]
+  }
+
   # SSH (not needed - using SSM)
   # ingress {
   #   description = "SSH"
