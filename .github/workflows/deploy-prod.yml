@@ -158,51 +158,51 @@ jobs:
           aws ssm send-command \
             --instance-ids ${{ steps.instance.outputs.id }} \
             --document-name "AWS-RunShellScript" \
-            --parameters commands="[
-              \"cat > /opt/emailai/.env <<'EOF'
-# Database
-DATABASE_URL=postgresql://${{ secrets.EMAILAI_DB_USER }}:${{ secrets.EMAILAI_DB_PASSWORD }}@${{ needs.terraform-deploy.outputs.db_endpoint }}/emailai_prod?schema=public
-DIRECT_URL=postgresql://${{ secrets.EMAILAI_DB_USER }}:${{ secrets.EMAILAI_DB_PASSWORD }}@${{ needs.terraform-deploy.outputs.db_endpoint }}/emailai_prod?schema=public
-
-# Application
-NEXTAUTH_URL=https://emailai.calldata.app
-NEXTAUTH_SECRET=${{ secrets.EMAILAI_NEXTAUTH_SECRET }}
-NODE_ENV=production
-
-# Google OAuth
-GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
-GOOGLE_ENCRYPT_SECRET=${{ secrets.GOOGLE_ENCRYPT_SECRET }}
-GOOGLE_ENCRYPT_SALT=${{ secrets.GOOGLE_ENCRYPT_SALT }}
-GOOGLE_PUBSUB_TOPIC_NAME=${{ secrets.GOOGLE_PUBSUB_TOPIC_NAME }}
-GOOGLE_PUBSUB_VERIFICATION_TOKEN=${{ secrets.GOOGLE_PUBSUB_VERIFICATION_TOKEN }}
-
-# API Security
-INTERNAL_API_KEY=${{ secrets.EMAILAI_INTERNAL_API_KEY }}
-API_KEY_SALT=${{ secrets.EMAILAI_API_KEY_SALT }}
-
-# Redis/Cache
-UPSTASH_REDIS_URL=${{ secrets.UPSTASH_REDIS_URL }}
-UPSTASH_REDIS_TOKEN=${{ secrets.UPSTASH_REDIS_TOKEN }}
-REDIS_URL=${{ secrets.REDIS_URL }}
-QSTASH_TOKEN=${{ secrets.QSTASH_TOKEN }}
-QSTASH_CURRENT_SIGNING_KEY=${{ secrets.QSTASH_CURRENT_SIGNING_KEY }}
-QSTASH_NEXT_SIGNING_KEY=${{ secrets.QSTASH_NEXT_SIGNING_KEY }}
-
-# AI Models (Vast.ai)
-OLLAMA_BASE_URL=${{ secrets.VASTAI_OLLAMA_URL }}
-NEXT_PUBLIC_OLLAMA_MODEL=llama3.3:70b
-DEFAULT_LLM_PROVIDER=ollama
-
-# Optional Cloud AI (fallback)
-OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}
-
-# Monitoring (optional)
-NEXT_PUBLIC_POSTHOG_KEY=${{ secrets.POSTHOG_KEY }}
-NEXT_PUBLIC_SENTRY_DSN=${{ secrets.SENTRY_DSN }}
-EOF\"
-            ]" \
+            --parameters 'commands=[
+              "cat > /opt/emailai/.env <<'\''ENVEOF'\''",
+              "# Database",
+              "DATABASE_URL=postgresql://${{ secrets.EMAILAI_DB_USER }}:${{ secrets.EMAILAI_DB_PASSWORD }}@${{ needs.terraform-deploy.outputs.db_endpoint }}/emailai_prod?schema=public",
+              "DIRECT_URL=postgresql://${{ secrets.EMAILAI_DB_USER }}:${{ secrets.EMAILAI_DB_PASSWORD }}@${{ needs.terraform-deploy.outputs.db_endpoint }}/emailai_prod?schema=public",
+              "",
+              "# Application",
+              "NEXTAUTH_URL=https://emailai.calldata.app",
+              "NEXTAUTH_SECRET=${{ secrets.EMAILAI_NEXTAUTH_SECRET }}",
+              "NODE_ENV=production",
+              "",
+              "# Google OAuth",
+              "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}",
+              "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}",
+              "GOOGLE_ENCRYPT_SECRET=${{ secrets.GOOGLE_ENCRYPT_SECRET }}",
+              "GOOGLE_ENCRYPT_SALT=${{ secrets.GOOGLE_ENCRYPT_SALT }}",
+              "GOOGLE_PUBSUB_TOPIC_NAME=${{ secrets.GOOGLE_PUBSUB_TOPIC_NAME }}",
+              "GOOGLE_PUBSUB_VERIFICATION_TOKEN=${{ secrets.GOOGLE_PUBSUB_VERIFICATION_TOKEN }}",
+              "",
+              "# API Security",
+              "INTERNAL_API_KEY=${{ secrets.EMAILAI_INTERNAL_API_KEY }}",
+              "API_KEY_SALT=${{ secrets.EMAILAI_API_KEY_SALT }}",
+              "",
+              "# Redis/Cache",
+              "UPSTASH_REDIS_URL=${{ secrets.UPSTASH_REDIS_URL }}",
+              "UPSTASH_REDIS_TOKEN=${{ secrets.UPSTASH_REDIS_TOKEN }}",
+              "REDIS_URL=${{ secrets.REDIS_URL }}",
+              "QSTASH_TOKEN=${{ secrets.QSTASH_TOKEN }}",
+              "QSTASH_CURRENT_SIGNING_KEY=${{ secrets.QSTASH_CURRENT_SIGNING_KEY }}",
+              "QSTASH_NEXT_SIGNING_KEY=${{ secrets.QSTASH_NEXT_SIGNING_KEY }}",
+              "",
+              "# AI Models (Vast.ai)",
+              "OLLAMA_BASE_URL=${{ secrets.VASTAI_OLLAMA_URL }}",
+              "NEXT_PUBLIC_OLLAMA_MODEL=llama3.3:70b",
+              "DEFAULT_LLM_PROVIDER=ollama",
+              "",
+              "# Optional Cloud AI (fallback)",
+              "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}",
+              "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}",
+              "",
+              "# Monitoring (optional)",
+              "NEXT_PUBLIC_POSTHOG_KEY=${{ secrets.POSTHOG_KEY }}",
+              "NEXT_PUBLIC_SENTRY_DSN=${{ secrets.SENTRY_DSN }}",
+              "ENVEOF"
+            ]' \
             --output text
 
       - name: Build Docker image
