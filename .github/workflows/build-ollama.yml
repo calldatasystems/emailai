@@ -9,26 +9,23 @@ on:
       - 'docker/Dockerfile.ollama'
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ghcr.io/calldatasystems/emailai-ollama
+  IMAGE_NAME: calldatasystems/emailai-ollama
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Log in to GitHub Container Registry
+      - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Extract metadata for Docker
         id: meta
@@ -52,6 +49,7 @@ jobs:
         run: |
           echo "✅ Ollama image built and pushed successfully!"
           echo "Image: ${{ env.IMAGE_NAME }}:latest"
+          echo "Docker Hub: https://hub.docker.com/r/${{ env.IMAGE_NAME }}"
           echo ""
           echo "To deploy on Vast.ai, use:"
           echo "vastai create instance <OFFER_ID> \\"
