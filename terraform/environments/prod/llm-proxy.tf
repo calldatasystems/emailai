@@ -30,7 +30,7 @@ resource "aws_lb_target_group" "llm_proxy" {
     enabled             = true
     healthy_threshold   = 2
     interval            = 30
-    matcher             = "200,502" # 502 is OK if Vast.ai is temporarily down
+    matcher             = "200"
     path                = "/llm/api/tags"
     port                = "traffic-port"
     protocol            = "HTTP"
