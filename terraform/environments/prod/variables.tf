@@ -3,13 +3,13 @@
 variable "project_name" {
   description = "Project name for resource tagging"
   type        = string
-  default     = "calldata"
+  default     = "emailai"
 }
 
 variable "environment" {
   description = "Environment name"
   type        = string
-  default     = "emailai-prod"
+  default     = "prod"
 }
 
 # VPC Configuration
@@ -96,7 +96,7 @@ variable "db_allocated_storage" {
 variable "db_engine_version" {
   description = "PostgreSQL engine version"
   type        = string
-  default     = "15.5"
+  default     = "15.15"
 }
 
 variable "db_multi_az" {
