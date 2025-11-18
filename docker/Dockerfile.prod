@@ -21,6 +21,10 @@ COPY packages/tsconfig/package.json packages/tsconfig/
 # Copy the rest of the application code FIRST
 COPY . .
 
+# Set Prisma environment variable to bypass checksum validation
+# Workaround for Prisma CDN issues (binaries.prisma.sh 500 errors)
+ENV PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1
+
 # Install ALL dependencies (including dev, no pruning)
 # This will now run postinstall scripts *after* source code is copied
 RUN pnpm install --frozen-lockfile
