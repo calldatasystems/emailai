@@ -244,7 +244,7 @@ jobs:
             --document-name "AWS-RunShellScript" \
             --parameters 'commands=[
               "cd /opt/emailai",
-              "sudo docker build -f docker/Dockerfile.prod -t emailai:latest .",
+              "sudo docker build --no-cache --pull -f docker/Dockerfile.prod -t emailai:latest .",
               "echo Docker build complete"
             ]' \
             --query "Command.CommandId" \
