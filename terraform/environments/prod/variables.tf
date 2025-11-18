@@ -13,10 +13,16 @@ variable "environment" {
 }
 
 # VPC Configuration
+variable "existing_vpc_id" {
+  description = "ID of existing VPC to use (leave empty to create new VPC)"
+  type        = string
+  default     = "vpc-07d54189eee51b854"
+}
+
 variable "vpc_cidr" {
   description = "CIDR block for VPC"
   type        = string
-  default     = "10.2.0.0/16"
+  default     = "10.10.0.0/16"
 }
 
 variable "availability_zones" {
@@ -28,13 +34,13 @@ variable "availability_zones" {
 variable "public_subnet_cidrs" {
   description = "CIDR blocks for public subnets"
   type        = list(string)
-  default     = ["10.2.1.0/24", "10.2.2.0/24"]
+  default     = ["10.10.1.0/24", "10.10.2.0/24"]
 }
 
 variable "private_subnet_cidrs" {
   description = "CIDR blocks for private subnets"
   type        = list(string)
-  default     = ["10.2.11.0/24", "10.2.12.0/24"]
+  default     = ["10.10.11.0/24", "10.10.12.0/24"]
 }
 
 variable "allowed_ssh_cidrs" {

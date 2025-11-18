@@ -10,6 +10,12 @@ variable "environment" {
   type        = string
 }
 
+variable "existing_vpc_id" {
+  description = "ID of existing VPC to use (leave empty to create new VPC)"
+  type        = string
+  default     = ""
+}
+
 variable "vpc_cidr" {
   description = "CIDR block for VPC"
   type        = string

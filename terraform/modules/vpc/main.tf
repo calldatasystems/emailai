@@ -1,7 +1,14 @@
-# VPC Module - Creates network infrastructure for Wazo Platform
+# VPC Module - Creates network infrastructure or uses existing VPC
 
-# VPC
+# Data source for existing VPC (when provided)
+data "aws_vpc" "existing" {
+  count = var.existing_vpc_id != "" ? 1 : 0
+  id    = var.existing_vpc_id
+}
+
+# VPC (only create if existing_vpc_id is not provided)
 resource "aws_vpc" "main" {
+  count                = var.existing_vpc_id == "" ? 1 : 0
   cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
   enable_dns_support   = true
@@ -11,9 +18,14 @@ resource "aws_vpc" "main" {
   }
 }
 
+# Local value to reference the VPC ID
+locals {
+  vpc_id = var.existing_vpc_id != "" ? data.aws_vpc.existing[0].id : aws_vpc.main[0].id
+}
+
 # Internet Gateway
 resource "aws_internet_gateway" "main" {
-  vpc_id = aws_vpc.main.id
+  vpc_id = local.vpc_id
 
   tags = {
     Name = "${var.project_name}-${var.environment}-igw"
@@ -23,7 +35,7 @@ resource "aws_internet_gateway" "main" {
 # Public Subnets
 resource "aws_subnet" "public" {
   count                   = length(var.public_subnet_cidrs)
-  vpc_id                  = aws_vpc.main.id
+  vpc_id                  = local.vpc_id
   cidr_block              = var.public_subnet_cidrs[count.index]
   availability_zone       = var.availability_zones[count.index]
   map_public_ip_on_launch = true
@@ -37,7 +49,7 @@ resource "aws_subnet" "public" {
 # Private Subnets (for future use in stage/prod)
 resource "aws_subnet" "private" {
   count             = length(var.private_subnet_cidrs)
-  vpc_id            = aws_vpc.main.id
+  vpc_id            = local.vpc_id
   cidr_block        = var.private_subnet_cidrs[count.index]
   availability_zone = var.availability_zones[count.index]
 
@@ -49,7 +61,7 @@ resource "aws_subnet" "private" {
 
 # Public Route Table
 resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.main.id
+  vpc_id = local.vpc_id
 
   route {
     cidr_block = "0.0.0.0/0"
@@ -72,7 +84,7 @@ resource "aws_route_table_association" "public" {
 resource "aws_security_group" "wazo" {
   name        = "${var.project_name}-${var.environment}-wazo-sg"
   description = "Security group for Wazo Platform servers"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = local.vpc_id
 
   # SSH Access
   ingress {
@@ -164,7 +176,7 @@ resource "aws_security_group" "wazo" {
 resource "aws_security_group" "litellm" {
   name        = "${var.project_name}-${var.environment}-litellm-sg"
   description = "Security group for LiteLLM AI Gateway"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = local.vpc_id
 
   # SSH Access
   ingress {
@@ -229,7 +241,7 @@ resource "aws_security_group" "litellm" {
 resource "aws_security_group" "alb" {
   name        = "${var.project_name}-${var.environment}-alb-sg"
   description = "Security group for Application Load Balancer"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = local.vpc_id
 
   # HTTP
   ingress {
@@ -267,7 +279,7 @@ resource "aws_security_group" "alb" {
 resource "aws_security_group" "emailai" {
   name        = "${var.project_name}-${var.environment}-emailai-sg"
   description = "Security group for EmailAI application servers"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = local.vpc_id
 
   # Application port from ALB
   ingress {
