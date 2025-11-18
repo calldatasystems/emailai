@@ -146,10 +146,10 @@ jobs:
             --instance-ids ${{ steps.instance.outputs.id }} \
             --document-name "AWS-RunShellScript" \
             --parameters 'commands=[
+              "sudo rm -rf /opt/emailai",
               "sudo mkdir -p /opt/emailai",
               "sudo chown ec2-user:ec2-user /opt/emailai",
-              "cd /opt/emailai",
-              "if [ -d .git ]; then git pull; else git clone https://github.com/${{ github.repository_owner }}/emailai.git .; fi"
+              "cd /opt && git clone https://github.com/${{ github.repository_owner }}/emailai.git emailai"
             ]' \
             --output text
 
