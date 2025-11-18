@@ -12,40 +12,40 @@ output "vpc_cidr" {
 
 output "internet_gateway_id" {
   description = "Internet Gateway ID"
-  value       = aws_internet_gateway.main.id
+  value       = local.use_existing ? data.aws_internet_gateway.existing[0].id : aws_internet_gateway.main[0].id
 }
 
 output "public_subnet_ids" {
   description = "List of public subnet IDs"
-  value       = aws_subnet.public[*].id
+  value       = local.use_existing ? data.aws_subnet.existing_public[*].id : aws_subnet.public[*].id
 }
 
 output "private_subnet_ids" {
   description = "List of private subnet IDs"
-  value       = aws_subnet.private[*].id
+  value       = local.use_existing ? data.aws_subnet.existing_private[*].id : aws_subnet.private[*].id
 }
 
 output "public_route_table_id" {
   description = "Public route table ID"
-  value       = aws_route_table.public.id
+  value       = local.create_new ? aws_route_table.public[0].id : null
 }
 
 output "wazo_security_group_id" {
   description = "Security group ID for Wazo servers"
-  value       = aws_security_group.wazo.id
+  value       = local.use_existing ? data.aws_security_group.existing_wazo[0].id : aws_security_group.wazo[0].id
 }
 
 output "litellm_security_group_id" {
   description = "Security group ID for LiteLLM AI Gateway"
-  value       = aws_security_group.litellm.id
+  value       = local.use_existing ? data.aws_security_group.existing_litellm[0].id : aws_security_group.litellm[0].id
 }
 
 output "alb_security_group_id" {
   description = "Security group ID for Application Load Balancer"
-  value       = aws_security_group.alb.id
+  value       = local.use_existing ? data.aws_security_group.existing_alb[0].id : aws_security_group.alb[0].id
 }
 
 output "emailai_security_group_id" {
   description = "Security group ID for EmailAI application servers"
-  value       = aws_security_group.emailai.id
+  value       = local.use_existing ? data.aws_security_group.existing_emailai[0].id : aws_security_group.emailai[0].id
 }
