@@ -149,7 +149,8 @@ jobs:
               "sudo mkdir -p /opt/emailai",
               "sudo chown ec2-user:ec2-user /opt/emailai",
               "cd /opt/emailai",
-              "if [ -d .git ]; then git pull; else git clone https://github.com/${{ github.repository_owner }}/emailai.git .; fi"
+              "if [ -d .git ]; then git pull; else git clone https://github.com/${{ github.repository_owner }}/emailai.git .; fi",
+              "echo PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1 >> .env.build"
             ]' \
             --output text
 
@@ -244,7 +245,7 @@ jobs:
             --document-name "AWS-RunShellScript" \
             --parameters 'commands=[
               "cd /opt/emailai",
-              "sudo docker build -f docker/Dockerfile.prod -t emailai:latest .",
+              "sudo docker build --build-arg PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1 -f docker/Dockerfile.prod -t emailai:latest .",
               "echo Docker build complete"
             ]' \
             --query "Command.CommandId" \
