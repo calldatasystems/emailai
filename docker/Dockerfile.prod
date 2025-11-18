@@ -21,10 +21,9 @@ COPY packages/tsconfig/package.json packages/tsconfig/
 # Copy the rest of the application code FIRST
 COPY . .
 
-# Install ALL dependencies (including dev, no pruning)
-# Set PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING to bypass checksum validation
-# Workaround for Prisma CDN issues (binaries.prisma.sh 500 errors)
-RUN PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1 pnpm install --frozen-lockfile
+# Install dependencies without running postinstall scripts
+# This avoids Prisma CDN issues during initial install
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Set NODE_ENV for build and runtime
 ENV NODE_ENV=production
@@ -51,8 +50,9 @@ ENV QSTASH_NEXT_SIGNING_KEY="dummy_qstash_next_key_for_build"
 ENV NEXT_PUBLIC_SANITY_PROJECT_ID="dummy-sanity-project-id-for-build"
 ENV NEXT_PUBLIC_SANITY_DATASET="dummy-sanity-dataset-for-build"
 
-# Ensure prisma generate runs
-RUN pnpm --filter inbox-zero-ai exec -- prisma generate
+# Run Prisma generate with checksum validation disabled
+# Workaround for Prisma CDN issues (binaries.prisma.sh 500 errors)
+RUN PRISMA_ENGINES_CHECKSUM_IGNORE_MISSING=1 pnpm --filter inbox-zero-ai exec -- prisma generate
 
 # Provide dummy DB URLs for build-time Prisma schema loading
 ENV DATABASE_URL="postgresql://dummy:dummy@dummy:5432/dummy?schema=public"
