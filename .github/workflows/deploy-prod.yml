@@ -148,7 +148,7 @@ jobs:
 
       - name: Clone EmailAI repository
         run: |
-          aws ssm send-command \
+          COMMAND_ID=$(aws ssm send-command \
             --instance-ids ${{ steps.instance.outputs.id }} \
             --document-name "AWS-RunShellScript" \
             --parameters 'commands=[
@@ -157,7 +157,14 @@ jobs:
               "sudo chown ec2-user:ec2-user /opt/emailai",
               "cd /opt && git clone https://github.com/${{ github.repository_owner }}/emailai.git emailai"
             ]' \
-            --output text
+            --query "Command.CommandId" \
+            --output text)
+
+          echo "Waiting for repository clone to complete..."
+          aws ssm wait command-executed \
+            --command-id $COMMAND_ID \
+            --instance-id ${{ steps.instance.outputs.id }} \
+            --timeout 300
 
       - name: Create environment file
         env:
@@ -237,11 +244,18 @@ jobs:
           ENV_CONTENT=$(cat /tmp/emailai.env.expanded | base64 -w 0)
 
           # Send to EC2 instance and decode
-          aws ssm send-command \
+          COMMAND_ID=$(aws ssm send-command \
             --instance-ids ${{ steps.instance.outputs.id }} \
             --document-name "AWS-RunShellScript" \
             --parameters "commands=[\"echo $ENV_CONTENT | base64 -d > /opt/emailai/.env\"]" \
-            --output text
+            --query "Command.CommandId" \
+            --output text)
+
+          echo "Waiting for .env file creation to complete..."
+          aws ssm wait command-executed \
+            --command-id $COMMAND_ID \
+            --instance-id ${{ steps.instance.outputs.id }} \
+            --timeout 60
 
       - name: Build Docker image
         run: |
@@ -265,33 +279,43 @@ jobs:
       - name: Run database migrations
         if: matrix.instance_index == 0
         run: |
-          aws ssm send-command \
+          COMMAND_ID=$(aws ssm send-command \
             --instance-ids ${{ steps.instance.outputs.id }} \
             --document-name "AWS-RunShellScript" \
             --parameters 'commands=[
               "cd /opt/emailai",
               "sudo docker run --rm --env-file .env emailai:latest pnpm --filter inbox-zero-ai exec -- prisma migrate deploy"
             ]' \
-            --output text
+            --query "Command.CommandId" \
+            --output text)
 
-          sleep 30
+          echo "Waiting for database migrations to complete..."
+          aws ssm wait command-executed \
+            --command-id $COMMAND_ID \
+            --instance-id ${{ steps.instance.outputs.id }} \
+            --timeout 300
 
       - name: Stop existing container
         run: |
-          aws ssm send-command \
+          COMMAND_ID=$(aws ssm send-command \
             --instance-ids ${{ steps.instance.outputs.id }} \
             --document-name "AWS-RunShellScript" \
             --parameters 'commands=[
               "sudo docker stop emailai || true",
               "sudo docker rm emailai || true"
             ]' \
-            --output text
+            --query "Command.CommandId" \
+            --output text)
 
-          sleep 10
+          echo "Waiting for container stop to complete..."
+          aws ssm wait command-executed \
+            --command-id $COMMAND_ID \
+            --instance-id ${{ steps.instance.outputs.id }} \
+            --timeout 60
 
       - name: Start EmailAI container
         run: |
-          aws ssm send-command \
+          COMMAND_ID=$(aws ssm send-command \
             --instance-ids ${{ steps.instance.outputs.id }} \
             --document-name "AWS-RunShellScript" \
             --parameters 'commands=[
@@ -301,7 +325,14 @@ jobs:
               "sleep 15",
               "sudo docker logs emailai --tail 50"
             ]' \
-            --output text
+            --query "Command.CommandId" \
+            --output text)
+
+          echo "Waiting for container to start..."
+          aws ssm wait command-executed \
+            --command-id $COMMAND_ID \
+            --instance-id ${{ steps.instance.outputs.id }} \
+            --timeout 120
 
       - name: Verify deployment
         run: |
