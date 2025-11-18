@@ -22,7 +22,7 @@ resource "aws_lb_listener_rule" "llm" {
 # Target group for LLM proxy (routes to EC2 instances running nginx proxy)
 resource "aws_lb_target_group" "llm_proxy" {
   name     = "${var.project_name}-${var.environment}-llm-tg"
-  port     = 8001  # nginx will listen on port 8001 for LLM proxy
+  port     = 8001 # nginx will listen on port 8001 for LLM proxy
   protocol = "HTTP"
   vpc_id   = module.vpc.vpc_id
 
@@ -30,7 +30,7 @@ resource "aws_lb_target_group" "llm_proxy" {
     enabled             = true
     healthy_threshold   = 2
     interval            = 30
-    matcher             = "200,502"  # 502 is OK if Vast.ai is temporarily down
+    matcher             = "200,502" # 502 is OK if Vast.ai is temporarily down
     path                = "/llm/api/tags"
     port                = "traffic-port"
     protocol            = "HTTP"

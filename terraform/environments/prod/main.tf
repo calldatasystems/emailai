@@ -38,14 +38,14 @@ module "database" {
 module "alb" {
   source = "../../modules/alb"
 
-  project_name              = var.project_name
-  environment               = var.environment
-  vpc_id                    = module.vpc.vpc_id
-  subnet_ids                = module.vpc.public_subnet_ids
-  security_group_ids        = [module.vpc.alb_security_group_id]
-  target_port               = 3000
-  health_check_path         = "/api/health"
-  certificate_arn           = var.certificate_arn
+  project_name               = var.project_name
+  environment                = var.environment
+  vpc_id                     = module.vpc.vpc_id
+  subnet_ids                 = module.vpc.public_subnet_ids
+  security_group_ids         = [module.vpc.alb_security_group_id]
+  target_port                = 3000
+  health_check_path          = "/api/health"
+  certificate_arn            = var.certificate_arn
   enable_deletion_protection = var.enable_deletion_protection
 }
 

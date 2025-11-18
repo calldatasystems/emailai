@@ -68,7 +68,7 @@ output "ssm_connect_commands" {
 # Deployment Information
 output "deployment_info" {
   description = "Information needed for deployment"
-  value = <<-EOT
+  value       = <<-EOT
 
     ====================================
     EmailAI Production Deployment
