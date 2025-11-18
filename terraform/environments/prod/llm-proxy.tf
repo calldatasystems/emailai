@@ -47,14 +47,14 @@ resource "aws_lb_target_group" "llm_proxy" {
 
 # Attach emailai instances to LLM proxy target group
 resource "aws_lb_target_group_attachment" "llm_proxy" {
-  count            = var.emailai_instance_count
+  count            = var.instance_count
   target_group_arn = aws_lb_target_group.llm_proxy.arn
-  target_id        = module.emailai.instance_ids[count.index]
+  target_id        = module.emailai_servers.instance_ids[count.index]
   port             = 8001
 }
 
 # Output the LLM HTTPS URL
 output "llm_https_url" {
   description = "HTTPS URL for LLM API via ALB (path-based routing)"
-  value       = "https://${var.domain_name}/llm/api"
+  value       = var.certificate_arn != "" ? "https://${module.alb.alb_dns_name}/llm/api" : "http://${module.alb.alb_dns_name}/llm/api"
 }

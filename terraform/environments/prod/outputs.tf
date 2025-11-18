@@ -19,7 +19,7 @@ output "private_subnet_ids" {
 # Database Outputs
 output "database_endpoint" {
   description = "RDS PostgreSQL endpoint"
-  value       = module.database.db_instance_endpoint
+  value       = module.database.db_endpoint
 }
 
 output "database_name" {
@@ -29,7 +29,7 @@ output "database_name" {
 
 output "database_connection_string" {
   description = "PostgreSQL connection string (without password)"
-  value       = "postgresql://${var.db_username}:PASSWORD@${module.database.db_instance_endpoint}/${module.database.db_name}?schema=public"
+  value       = "postgresql://${var.db_username}:PASSWORD@${module.database.db_endpoint}/${module.database.db_name}?schema=public"
   sensitive   = true
 }
 
@@ -77,12 +77,12 @@ output "deployment_info" {
     Application URL: ${var.certificate_arn != "" ? "https://${module.alb.alb_dns_name}" : "http://${module.alb.alb_dns_name}"}
 
     Database:
-      Endpoint: ${module.database.db_instance_endpoint}
+      Endpoint: ${module.database.db_endpoint}
       Database: ${module.database.db_name}
       Username: ${var.db_username}
 
       Connection String:
-      DATABASE_URL="postgresql://${var.db_username}:YOUR_PASSWORD@${module.database.db_instance_endpoint}/${module.database.db_name}?schema=public"
+      DATABASE_URL="postgresql://${var.db_username}:YOUR_PASSWORD@${module.database.db_endpoint}/${module.database.db_name}?schema=public"
 
     EC2 Instances:
       Count: ${var.instance_count}
