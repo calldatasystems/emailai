@@ -1,7 +1,13 @@
 name: Deploy to Production (AWS)
 
 on:
-  workflow_dispatch:  # Manual trigger only
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/deploy-prod.yml'
+  workflow_dispatch:  # Manual trigger also available
     inputs:
       action:
         description: 'Deployment action'
@@ -75,14 +81,14 @@ jobs:
         run: exit 1
 
       - name: Terraform Apply
-        if: github.event.inputs.action == 'apply' && steps.plan.outputs.exitcode == '2'
+        if: (github.event.inputs.action == 'apply' || github.event_name == 'push') && steps.plan.outputs.exitcode == '2'
         id: apply
         run: |
           terraform apply -auto-approve tfplan
           echo "Infrastructure deployed successfully"
 
       - name: Get Terraform Outputs
-        if: github.event.inputs.action == 'apply'
+        if: github.event.inputs.action == 'apply' || github.event_name == 'push'
         id: output
         run: |
           echo "instance_ids=$(terraform output -json instance_ids | jq -r '.[]' | tr '\n' ',' | sed 's/,$//')" >> $GITHUB_OUTPUT
@@ -90,7 +96,7 @@ jobs:
           echo "db_endpoint=$(terraform output -raw database_endpoint)" >> $GITHUB_OUTPUT
 
       - name: Display Infrastructure Info
-        if: github.event.inputs.action == 'apply'
+        if: github.event.inputs.action == 'apply' || github.event_name == 'push'
         run: |
           echo "=== EmailAI Infrastructure Deployed ==="
           echo "ALB DNS: ${{ steps.output.outputs.alb_dns }}"
@@ -101,7 +107,7 @@ jobs:
   deploy-application:
     name: Deploy Application to EC2
     needs: terraform-deploy
-    if: github.event.inputs.action == 'apply'
+    if: github.event.inputs.action == 'apply' || github.event_name == 'push'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -320,7 +326,7 @@ jobs:
     name: Final Health Check
     needs: [terraform-deploy, deploy-application]
     runs-on: ubuntu-latest
-    if: github.event.inputs.action == 'apply'
+    if: github.event.inputs.action == 'apply' || github.event_name == 'push'
 
     steps:
       - name: Wait for ALB to be healthy
