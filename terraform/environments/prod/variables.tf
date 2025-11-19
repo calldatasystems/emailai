@@ -1,4 +1,4 @@
-# EmailAI Stage Environment Variables
+# EmailAI Stage Environment - Fresh Deployment
 
 variable "project_name" {
   description = "Project name for resource tagging"
